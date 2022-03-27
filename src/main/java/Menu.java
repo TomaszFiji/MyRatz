@@ -15,8 +15,8 @@ import java.util.Objects;
  */
 public class Menu extends Application {
 
-	public static Stage rootStage = null;
-	Scene scene;
+	private static Stage rootStage = null;
+	private Scene scene;
 
 	public void run(String[] args) {
 		launch(args);
@@ -39,12 +39,10 @@ public class Menu extends Application {
 		rootStage.setOnCloseRequest(event -> {
 			System.out.println("Stage is closing");
 
-			// TODO: uncomment it when we want to save data
 			try {
 				ProfileFileReader.saveDataToFile();
 				HighScores.saveDataToFile();
 			} catch (IOException e) {
-				// TODO do give an alert
 				e.printStackTrace();
 			}
 		});

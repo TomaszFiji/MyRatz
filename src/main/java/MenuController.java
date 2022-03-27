@@ -124,7 +124,6 @@ public class MenuController {
 	@FXML
 	private Button openLevelEditorButton;
 
-
 	/**
 	 * Method initialize initial state of each scene.
 	 */
@@ -134,6 +133,8 @@ public class MenuController {
 			profilesViewUpdated = false;
 			updateProfilesView();
 		} else if (this.menuRoot != null) {
+//			stage = Menu.getStage();
+//			scene = stage.getScene();
 			menuViewUpdated = false;
 			updateMenuView();
 		} else if (this.levelsSelectionRoot != null) {
@@ -760,5 +761,16 @@ public class MenuController {
 		}
 		System.out.println("stage closing");
 		Menu.getStage().close();
+	}
+	
+	
+	public void runServer(ActionEvent event) throws IOException {
+		System.out.println("run server");
+		changeToMenu(event);
+		EditorServer s = new EditorServer("level-3", true,scene, stage, this);
+	}
+	
+	public void runClient() {
+		System.out.println("run client");
 	}
 }
