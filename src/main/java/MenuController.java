@@ -161,7 +161,7 @@ public class MenuController {
 		window.setHeight(200);
 
 		Label label = new Label(message);
-		Button button = new Button("Ok");
+		Button button = new Button("Ok wefesfef");
 		button.setPrefWidth(100);
 		button.setOnAction(event -> window.close());
 
