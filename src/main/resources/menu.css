@@ -1,0 +1,79 @@
+@font-face {
+    font-family: Linerama;
+    src: url('gui/LineramaBold-d9VnE.ttf');
+}
+.root{
+    -fx-background-color: #2d4945;
+    -fx-font-family: 'Linerama';
+}
+
+.label {
+    
+    -fx-text-fill: #00ffe4;
+    -fx-font-size: 20.0px;
+    -fx-text-alignment: center;
+}
+
+#labelMOTD {
+    
+    -fx-text-fill: #00ffe4;
+    -fx-font-size: 15.0px;
+    -fx-text-alignment: center;
+}
+
+.radio-button > .radio {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-background-radius: 0px;
+    -fx-padding: 0.0em; /* 4 8 4 8 */
+}
+.radio-button:selected > .radio > .dot {
+    -fx-background-color: transparent;
+}
+.radio-button {
+    -fx-text-aligmrnt: center;
+    -fx-background-image: url('gui/radio-button.png');
+}
+
+.button{
+    -fx-background-image: url('gui/level-button.png');
+    -fx-font-size: 18px;
+    -fx-font-family: 'Linerama';
+}
+
+#red-menu-button {
+    -fx-background-image: url('gui/red-menu-button1.png');
+}
+
+#green-menu-button1 {
+    -fx-background-image: url('gui/green-menu-button1.png');
+}
+
+#menu-button1 {
+    -fx-background-image: url('gui/menu-button1.png');
+}
+
+.profileLabel {
+    -fx-font-size: 30px;
+    -fx-font-family: 'Linerama';
+}
+
+#sidebar1-menu {
+    -fx-background-image: url('gui/sidebar1-menu.png');   
+}
+#sidebar2-menu {
+    -fx-background-image: url('gui/sidebar2-menu.png'); 
+}
+#sidebar3-menu {
+    -fx-background-image: url('gui/sidebar3-menu.png'); 
+}
+#sidebar4-menu {
+    -fx-background-image: url('gui/sidebar4-menu.png'); 
+}
+#selectedLevelHeadingLabel {
+    -fx-text-alignment: center;
+    -fx-font-size: 30px;
+    -fx-font-family: 'Linerama';
+}
+
+
