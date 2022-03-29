@@ -116,4 +116,9 @@ public class Tile extends GameObject {
     public boolean isInteractive() {
         return false;
     }
+
+	public void addActivePowers(ArrayList<Power> activePowers2) {
+		// TODO Auto-generated method stub
+		
+	}
 }

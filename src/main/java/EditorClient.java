@@ -1,14 +1,15 @@
 import static java.lang.Integer.parseInt;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.ServerSocket;
+import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
 
@@ -36,76 +37,10 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
-public class EditorServer {
-	private static final int PORT = Menu.SERVER_PORT;
-	private static ArrayList<EditorServerThread> clients = new ArrayList<>();
-	private static ExecutorService pool = Executors.newFixedThreadPool(4);
-
-	public void runTheGame(String selectedEditLevelName, boolean isDefaultLevel, Scene scene, Stage stage,
-			MenuController menu) throws IOException {
-
-		FXMLLoader loader = new FXMLLoader(getClass().getResource("editor.fxml"));
-
-		if (isDefaultLevel) {
-			LevelFileReader.loadNormalLevelFile("src/main/resources/levels/default_levels/" + selectedEditLevelName,
-					true);
-		} else {
-			LevelFileReader.loadNormalLevelFile("src/main/resources/levels/created_levels/" + selectedEditLevelName,
-					true);
-		}
-
-		// EditorController editorController = new
-		// EditorController(selectedEditLevelName, menu);
-		this.levelName = levelName;
-		MAIN_MENU = menu;
-
-		width = LevelFileReader.getWidth();
-		height = LevelFileReader.getHeight();
-
-		tileMap = LevelFileReader.getTileMap();
-		changeToAdultRats();
-
-		maxRats = LevelFileReader.getMaxRats();
-		parTime = LevelFileReader.getParTime();
-		dropRates = LevelFileReader.getDropRates();
-		for (int i = 0; i < dropRates.length; i++) {
-			dropRates[i] = dropRates[i] / MILLIS_RATIO;
-		}
-
-		loader.setController(this);
-		Pane root = loader.load();
-
-		scene = new Scene(root, root.getPrefWidth(), root.getPrefHeight());
-		stage.setScene(scene);
-		stage.show();
-	}
-
-	public void runServer(String selectedEditLevelName, boolean isDefaultLevel, Scene scene, Stage stage,
-			MenuController menu) throws IOException {
-		ServerSocket editorServer = new ServerSocket(PORT);
-
-		int counter = 0;
-		System.out.println("initializing");
-		while (counter < 1) {
-			System.out.println("waiting..");
-			Socket client = editorServer.accept();
-			System.out.println("con");
-			EditorServerThread cl = new EditorServerThread(this, client, clients);
-			clients.add(cl);
-			System.out.println("new thread");
-			Thread clThread = new Thread(cl);
-			clThread.start();
-//			clients.add(cl);
-//			System.out.println("connected");
-//			pool.execute(cl);
-			counter++;
-		}
-
-	}
-
-	private boolean areAllReady() {
-		return false;
-	}
+public class EditorClient {
+	private static final String SERVER_IP = "127.0.0.1";
+	private static final int SERVER_PORT = Menu.SERVER_PORT;
+	private EditorClientListener clientListener;
 
 	// Size of one tile in pixels
 	private static final int TILE_SIZE = 64;
@@ -113,10 +48,10 @@ public class EditorServer {
 	private static final int MILLIS_RATIO = 1000;
 
 	// Time between item drops
-	private int[] dropRates;
+	private final int[] dropRates;
 
-	private String levelName;
-	private MenuController MAIN_MENU;
+	private final String levelName;
+	private final MenuController MAIN_MENU;
 
 	// Size of game map
 	private int width;
@@ -173,24 +108,47 @@ public class EditorServer {
 
 	// Level map
 	private Tile[][] tileMap = new Tile[0][0];
-
-	public synchronized Tile[][] getTileMap() throws InterruptedException {
-		Tile[][] newTileMap = new Tile[tileMap.length][tileMap[0].length];
-
-		for (int i = 0; i < tileMap.length; i++) {
-			for (int j = 0; j < tileMap[0].length; j++) {
-				newTileMap[i][j] = tileMap[i][j];
-//				ArrayList<Rat> occupantRats = tileMap[i][j].getOccupantRats();
-//				for (Rat r : occupantRats) {
-//					newTileMap[i][j].addOccupantRat(r);
-//				}
-//				ArrayList<Power> activePowers =  tileMap[i][j].getActivePowers();
-//				for (Power p : activePowers) {
-//					newTileMap[i][j].addActivePower(p);
-//				}
-			}
+	
+	public void runTheGame(String selectedEditLevelName, boolean isDefaultLevel, Scene scene, Stage stage,
+			MenuController menu) throws IOException {
+		
+		FXMLLoader loader = new FXMLLoader(getClass().getResource("editor.fxml"));
+		
+		if (isDefaultLevel) {
+			LevelFileReader.loadNormalLevelFile("src/main/resources/levels/default_levels/" + selectedEditLevelName,
+					true);
+		} else {
+			LevelFileReader.loadNormalLevelFile("src/main/resources/levels/created_levels/" + selectedEditLevelName,
+					true);
 		}
-		return newTileMap;
+
+		//EditorController editorController = new EditorController(selectedEditLevelName, menu);
+		loader.setController(this);
+		Pane root = loader.load();
+
+		scene = new Scene(root, root.getPrefWidth(), root.getPrefHeight());
+		stage.setScene(scene);
+		stage.show();
+	}
+
+	public void runClient() throws IOException, ClassNotFoundException, InterruptedException {
+		Socket server = new Socket(SERVER_IP, SERVER_PORT);
+		clientListener = new EditorClientListener(this, server);
+		Thread clientListenerThread = new Thread(clientListener);
+		clientListenerThread.start();
+//		Thread.sleep(5000);
+//		clientListenerThread.interrupt();
+		
+		System.out.println("runned*******************************");
+	}
+
+	public void setTileMap(Tile[][] tileMap) {
+		this.tileMap = tileMap.clone();
+		System.out.println("Tile map changed");
+		renderBoard();
+	}
+	public Tile[][] getTileMap() {
+		return tileMap;
 	}
 
 	/**
@@ -198,7 +156,7 @@ public class EditorServer {
 	 * 
 	 * @param mainMenuController reference to main menu.
 	 */
-	public EditorServer(MenuController mainMenuController) {
+	public EditorClient(MenuController mainMenuController) {
 		MAIN_MENU = mainMenuController;
 		width = 10;
 		height = 7;
@@ -221,7 +179,7 @@ public class EditorServer {
 	 * @param levelName          name of original existing level.
 	 * @param mainMenuController reference to main menu.
 	 */
-	public EditorServer(String levelName, MenuController mainMenuController) {
+	public EditorClient(String levelName, MenuController mainMenuController) {
 		this.levelName = levelName;
 		MAIN_MENU = mainMenuController;
 
@@ -532,7 +490,6 @@ public class EditorServer {
 				}
 			}
 		}
-		// notifyAll();
 	}
 
 	/**

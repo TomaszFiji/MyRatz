@@ -1,3 +1,5 @@
+import java.io.Serializable;
+
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
 
@@ -7,69 +9,70 @@ import javafx.scene.image.Image;
  * @author Vilija Pundyte
  * @version 1.0
  */
-public abstract class GameObject {
-    private static final int WIDTH = 64;
+public abstract class GameObject implements Serializable {
+	private static final int WIDTH = 64;
 
-    private final Image img;
-    private final boolean isPassable;
+	// private final Image img;
+	private final String img;
+	private final boolean isPassable;
 
-    /**
-     * Object constructor.
-     *
-     * @param isPassable can rats walk through.
-     */
-    public GameObject(boolean isPassable) {
-        this.isPassable = isPassable;
-        img = new Image(createTexturePath());
-    }
+	/**
+	 * Object constructor.
+	 *
+	 * @param isPassable can rats walk through.
+	 */
+	public GameObject(boolean isPassable) {
+		this.isPassable = isPassable;
+		img = createTexturePath();
+	}
 
-    /**
-     * Draws object on screen.
-     *
-     * @param x Horizontal position.
-     * @param y Vertical position.
-     * @param g Graphics context being drawn on.
-     */
-    public void draw(int x, int y, GraphicsContext g) {
-        x = WIDTH * x;
-        y = WIDTH * y;
-        g.drawImage(img,x,y);
-    }
+	/**
+	 * Draws object on screen.
+	 *
+	 * @param x Horizontal position.
+	 * @param y Vertical position.
+	 * @param g Graphics context being drawn on.
+	 */
+	public void draw(int x, int y, GraphicsContext g) {
+		x = WIDTH * x;
+		y = WIDTH * y;
+		g.drawImage(this.getImg(), x, y);
+	}
 
-    /**
-     * Gets width of a single game object texture in pixels.
-     *
-     * @return width of game object.
-     */
-    protected static int getWIDTH() {
-        return WIDTH;
-    }
+	/**
+	 * Gets width of a single game object texture in pixels.
+	 *
+	 * @return width of game object.
+	 */
+	protected static int getWIDTH() {
+		return WIDTH;
+	}
 
-    /**
-     * Gets game object image.
-     *
-     * @return game object image.
-     */
-    protected Image getImg() {
-        return img;
-    }
+	/**
+	 * Gets game object image.
+	 *
+	 * @return game object image.
+	 */
+	protected Image getImg() {
+		return new Image(img);
+	}
 
-    /**
-     * Creates file path to the texture of a specific object.
-     *
-     * @return File path as String.
-     */
-    public String createTexturePath() {
-        String className = this.getClass().getSimpleName().toLowerCase();
-        return "file:target/classes/" + className + ".png";
-    }
+	/**
+	 * Creates file path to the texture of a specific object.
+	 *
+	 * @return File path as String.
+	 */
+	public String createTexturePath() {
+		String className = this.getClass().getSimpleName().toLowerCase();
+		return "file:target/classes/" + className + ".png";
+	}
 
-    /**
-     * Returns whether rats can pass through game object.
-     *
-     * @return can be passed.
-     */
-    public boolean isPassable() {
-        return isPassable;
-    }
+	/**
+	 * Returns whether rats can pass through game object.
+	 *
+	 * @return can be passed.
+	 */
+	public boolean isPassable() {
+		return isPassable;
+	}
 }

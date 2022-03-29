@@ -15,6 +15,7 @@ import java.util.Objects;
  */
 public class Menu extends Application {
 
+	public static final int SERVER_PORT = 2179;
 	private static Stage rootStage = null;
 	private Scene scene;
 

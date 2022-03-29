@@ -762,15 +762,20 @@ public class MenuController {
 		System.out.println("stage closing");
 		Menu.getStage().close();
 	}
-	
-	
+
 	public void runServer(ActionEvent event) throws IOException {
 		System.out.println("run server");
 		changeToMenu(event);
-		EditorServer s = new EditorServer("level-3", true,scene, stage, this);
+		EditorServer s = new EditorServer(this);
+		s.runServer("level-3", true, scene, stage, this);
+		s.runTheGame("level-3", true, scene, stage, this);
 	}
-	
-	public void runClient() {
+
+	public void runClient(ActionEvent event) throws IOException, ClassNotFoundException, InterruptedException {
 		System.out.println("run client");
+		changeToMenu(event);
+		EditorClient c = new EditorClient(this);
+		c.runTheGame("level-3", true, scene, stage, this);
+		c.runClient();
 	}
 }
