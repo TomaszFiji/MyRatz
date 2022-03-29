@@ -41,6 +41,7 @@ public class EditorClient {
 	private static final String SERVER_IP = "127.0.0.1";
 	private static final int SERVER_PORT = Menu.SERVER_PORT;
 	private EditorClientListener clientListener;
+	private EditorClientOutput clientOutput;
 
 	// Size of one tile in pixels
 	private static final int TILE_SIZE = 64;
@@ -108,12 +109,12 @@ public class EditorClient {
 
 	// Level map
 	private Tile[][] tileMap = new Tile[0][0];
-	
+
 	public void runTheGame(String selectedEditLevelName, boolean isDefaultLevel, Scene scene, Stage stage,
 			MenuController menu) throws IOException {
-		
+
 		FXMLLoader loader = new FXMLLoader(getClass().getResource("editor.fxml"));
-		
+
 		if (isDefaultLevel) {
 			LevelFileReader.loadNormalLevelFile("src/main/resources/levels/default_levels/" + selectedEditLevelName,
 					true);
@@ -122,7 +123,6 @@ public class EditorClient {
 					true);
 		}
 
-		//EditorController editorController = new EditorController(selectedEditLevelName, menu);
 		loader.setController(this);
 		Pane root = loader.load();
 
@@ -134,11 +134,12 @@ public class EditorClient {
 	public void runClient() throws IOException, ClassNotFoundException, InterruptedException {
 		Socket server = new Socket(SERVER_IP, SERVER_PORT);
 		clientListener = new EditorClientListener(this, server);
+		clientOutput = new EditorClientOutput(this, server);
 		Thread clientListenerThread = new Thread(clientListener);
+		Thread clientOutputThread = new Thread(clientOutput);
 		clientListenerThread.start();
-//		Thread.sleep(5000);
-//		clientListenerThread.interrupt();
-		
+		// clientListenerThread.start();
+
 		System.out.println("runned*******************************");
 	}
 
@@ -147,6 +148,7 @@ public class EditorClient {
 		System.out.println("Tile map changed");
 		renderBoard();
 	}
+
 	public Tile[][] getTileMap() {
 		return tileMap;
 	}
@@ -260,25 +262,8 @@ public class EditorClient {
 		int x = (int) event.getX() / TILE_SIZE;
 		int y = (int) event.getY() / TILE_SIZE;
 
-		if (tileMap[x][y].getOccupantRats().size() != 0) {
-			tileMap[x][y].getOccupantRats().clear();
-		}
-		switch (type) {
-		case 'm':
-			tileMap[x][y].addOccupantRat(new AdultMale(1, Rat.Direction.NORTH, 0, 0, 0, false));
-			System.out.println("male " + x + " " + y + " " + tileMap);
-			break;
-		case 'f':
-			tileMap[x][y].addOccupantRat(new AdultFemale(1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0));
-			System.out.println("female " + x + " " + y);
-			break;
-		case 'i':
-			tileMap[x][y].addOccupantRat(new AdultIntersex(1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0));
-			System.out.println("intersex " + x + " " + y);
-			break;
-		}
+		clientOutput.placeRat(type, x, y);
 
-		renderBoard();
 	}
 
 	/**
@@ -332,27 +317,33 @@ public class EditorClient {
 			if (x < width - 1 && x >= 1 && y >= 1 && y < height - 1) {
 				if ((!(tileMap[x][y].getClass() == selectedTile.getClass()))) {
 					if (selectedTile instanceof Grass) {
-						tileMap[x][y] = new Grass();
 						System.out.println("grass " + x + " " + y);
+						clientOutput.placeTile('g', x, y);
 					} else if (selectedTile instanceof GrassB) {
-						tileMap[x][y] = new GrassB();
 						System.out.println("grassB " + x + " " + y);
+						clientOutput.placeTile('G', x, y);
 					} else if (selectedTile instanceof Path) {
-						tileMap[x][y] = new Path();
 						System.out.println("path " + x + " " + y);
+						clientOutput.placeTile('p', x, y);
 					} else if (selectedTile instanceof PathB) {
-						tileMap[x][y] = new PathB();
 						System.out.println("pathB " + x + " " + y);
+						clientOutput.placeTile('P', x, y);
 					} else if (selectedTile instanceof Tunnel) {
-						tileMap[x][y] = new Tunnel();
 						System.out.println("tunnel " + x + " " + y);
+						clientOutput.placeTile('t', x, y);
 					} else if (selectedTile instanceof TunnelB) {
-						tileMap[x][y] = new TunnelB();
 						System.out.println("tunnelB " + x + " " + y);
+						clientOutput.placeTile('T', x, y);
+					} else {
+						System.out.println("Mouse pressed something wrong");
 					}
-					renderBoard();
+				} else {
+					System.out.println("Mouse pressed2 something wrong");
 				}
+			} else {
+				System.out.println("Mouse pressed3 something wrong");
 			}
+			System.out.println("Mouse Pressed done " + x + " " + y);
 		});
 		levelCanvas.setOnMouseDragged(event -> {
 			int x = (int) event.getX() / TILE_SIZE;
@@ -361,27 +352,29 @@ public class EditorClient {
 			if (x < width - 1 && x >= 1 && y >= 1 && y < height - 1) {
 				if ((!(tileMap[x][y].getClass() == selectedTile.getClass()))) {
 					if (selectedTile instanceof Grass) {
-						tileMap[x][y] = new Grass();
 						System.out.println("grass " + x + " " + y);
+						clientOutput.placeTile('g', x, y);
 					} else if (selectedTile instanceof GrassB) {
-						tileMap[x][y] = new GrassB();
 						System.out.println("grassB " + x + " " + y);
+						clientOutput.placeTile('G', x, y);
 					} else if (selectedTile instanceof Path) {
-						tileMap[x][y] = new Path();
 						System.out.println("path " + x + " " + y);
+						clientOutput.placeTile('p', x, y);
 					} else if (selectedTile instanceof PathB) {
-						tileMap[x][y] = new PathB();
 						System.out.println("pathB " + x + " " + y);
+						clientOutput.placeTile('P', x, y);
 					} else if (selectedTile instanceof Tunnel) {
-						tileMap[x][y] = new Tunnel();
 						System.out.println("tunnel " + x + " " + y);
+						clientOutput.placeTile('t', x, y);
 					} else if (selectedTile instanceof TunnelB) {
-						tileMap[x][y] = new TunnelB();
 						System.out.println("tunnelB " + x + " " + y);
+						clientOutput.placeTile('T', x, y);
+					} else {
+						System.out.println("Mouse dragged something wrong");
 					}
-					renderBoard();
 				}
 			}
+			System.out.println("Mouse dragged done");
 		});
 	}
 
@@ -480,8 +473,8 @@ public class EditorClient {
 	private void renderBoard() {
 		GraphicsContext gc = levelCanvas.getGraphicsContext2D();
 
-		gc.setFill(Color.web("#2d4945"));
-		gc.fillRect(0, 0, levelCanvas.getWidth(), levelCanvas.getHeight());
+//		gc.setFill(Color.web("#2d4945"));
+//		gc.fillRect(0, 0, levelCanvas.getWidth(), levelCanvas.getHeight());
 
 		if (tileMap != null) {
 			for (int i = 0; i < tileMap.length; i++) {
@@ -490,6 +483,7 @@ public class EditorClient {
 				}
 			}
 		}
+		System.out.println("Finished rendering \n");
 	}
 
 	/**

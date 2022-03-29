@@ -38,8 +38,8 @@ import javafx.stage.Stage;
 
 public class EditorServer {
 	private static final int PORT = Menu.SERVER_PORT;
-	private static ArrayList<EditorServerThread> clients = new ArrayList<>();
-	private static ExecutorService pool = Executors.newFixedThreadPool(4);
+	private static ArrayList<EditorServerThreadObjectOutput> clientsObjectsOutputs = new ArrayList<>();
+	private static ArrayList<EditorServerThreadInput> clientsInputs = new ArrayList<>();
 
 	public void runTheGame(String selectedEditLevelName, boolean isDefaultLevel, Scene scene, Stage stage,
 			MenuController menu) throws IOException {
@@ -90,11 +90,20 @@ public class EditorServer {
 			System.out.println("waiting..");
 			Socket client = editorServer.accept();
 			System.out.println("con");
-			EditorServerThread cl = new EditorServerThread(this, client, clients);
-			clients.add(cl);
-			System.out.println("new thread");
-			Thread clThread = new Thread(cl);
-			clThread.start();
+			
+			EditorServerThreadObjectOutput clientOutput = new EditorServerThreadObjectOutput(this, client);
+			EditorServerThreadInput clientInput = new EditorServerThreadInput(this, client);
+			
+			clientsObjectsOutputs.add(clientOutput);
+			clientsInputs.add(clientInput);
+			
+			System.out.println("new threads");
+			
+			Thread clientOutputThread = new Thread(clientOutput);
+			Thread clientInputThread = new Thread(clientInput);
+			
+			clientOutputThread.start();
+			clientInputThread.start();
 //			clients.add(cl);
 //			System.out.println("connected");
 //			pool.execute(cl);
@@ -175,22 +184,7 @@ public class EditorServer {
 	private Tile[][] tileMap = new Tile[0][0];
 
 	public synchronized Tile[][] getTileMap() throws InterruptedException {
-		Tile[][] newTileMap = new Tile[tileMap.length][tileMap[0].length];
-
-		for (int i = 0; i < tileMap.length; i++) {
-			for (int j = 0; j < tileMap[0].length; j++) {
-				newTileMap[i][j] = tileMap[i][j];
-//				ArrayList<Rat> occupantRats = tileMap[i][j].getOccupantRats();
-//				for (Rat r : occupantRats) {
-//					newTileMap[i][j].addOccupantRat(r);
-//				}
-//				ArrayList<Power> activePowers =  tileMap[i][j].getActivePowers();
-//				for (Power p : activePowers) {
-//					newTileMap[i][j].addActivePower(p);
-//				}
-			}
-		}
-		return newTileMap;
+		return tileMap;
 	}
 
 	/**
@@ -291,6 +285,31 @@ public class EditorServer {
 			spawnDropped(event, ratType);
 		});
 	}
+	
+	public void ratAdded(String[] inputs) {
+		int x = Integer.parseInt(inputs[2]);
+		int y = Integer.parseInt(inputs[3]);
+
+		if (tileMap[x][y].getOccupantRats().size() != 0) {
+			tileMap[x][y].getOccupantRats().clear();
+		}
+		switch (inputs[1].charAt(0)) {
+		case 'm':
+			tileMap[x][y].addOccupantRat(new AdultMale(1, Rat.Direction.NORTH, 0, 0, 0, false));
+			System.out.println("male " + x + " " + y + " " + tileMap);
+			break;
+		case 'f':
+			tileMap[x][y].addOccupantRat(new AdultFemale(1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0));
+			System.out.println("female " + x + " " + y);
+			break;
+		case 'i':
+			tileMap[x][y].addOccupantRat(new AdultIntersex(1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0));
+			System.out.println("intersex " + x + " " + y);
+			break;
+		}
+
+		renderBoard();
+	}
 
 	/**
 	 * Handles dropping things onto canvas.
@@ -361,6 +380,33 @@ public class EditorServer {
 			dragboard.setContent(clipboardContent);
 			event.consume();
 		});
+	}
+	
+	public void tileAdded(String[] inputs) {
+		char type = inputs[1].charAt(0);
+		int x = Integer.parseInt(inputs[2]);
+		int y = Integer.parseInt(inputs[3]);
+		switch (type) {
+		case 'g' :
+			tileMap[x][y] = new Grass();
+			break;
+		case 'G' :
+			tileMap[x][y] = new GrassB();
+			break;
+		case 'p' :
+			tileMap[x][y] = new Path();
+			break;
+		case 'P' :
+			tileMap[x][y] = new PathB();
+			break;
+		case 't' :
+			tileMap[x][y] = new Tunnel();
+			break;
+		case 'T' :
+			tileMap[x][y] = new TunnelB();
+			break;
+		}
+		renderBoard();
 	}
 
 	/**
@@ -532,7 +578,9 @@ public class EditorServer {
 				}
 			}
 		}
-		// notifyAll();
+		for (EditorServerThreadObjectOutput est : clientsObjectsOutputs) {
+			est.run();
+		}
 	}
 
 	/**
