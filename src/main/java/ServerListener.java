@@ -1,20 +1,16 @@
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.ObjectOutputStream;
-import java.io.PrintWriter;
 import java.net.Socket;
 
-public class EditorServerThreadInput implements Runnable {
-	private EditorServer server;
+public class ServerListener implements Runnable {
+	private Server server;
 	private Socket client;
 	private BufferedReader in = null;
-	private boolean isReady;
 
-	public EditorServerThreadInput(EditorServer server, Socket client) throws IOException {
+	public ServerListener(Server server, Socket client) throws IOException {
 		this.server = server;
 		this.client = client;
-		this.isReady = false;
 		this.in = new BufferedReader(new InputStreamReader(client.getInputStream()));
 	}
 
@@ -27,17 +23,8 @@ public class EditorServerThreadInput implements Runnable {
 				System.out.println("recived: " + input);
 
 				switch (inputs[0]) {
-				case "rat":
-					this.server.ratAdded(inputs);
-					break;
-				case "tile":
-					this.server.tileAdded(inputs);
-					break;
-				case "size":
-					this.server.changeLevelSize(inputs);
-					break;
-				case "settings":
-					this.server.saveSettings(inputs);
+				case "createdLevels":
+					
 					break;
 				}
 			}
@@ -46,4 +33,5 @@ public class EditorServerThreadInput implements Runnable {
 		}
 
 	}
+
 }

@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -12,7 +13,8 @@ public class Server {
 	private ArrayList<EditorServer> editorServers = new ArrayList<>();
 
 	public Server(MenuController menu, Scene scene, Stage stage) throws IOException {
-		serverSocket = new ServerSocket(0);
+		serverSocket = new ServerSocket(5556);
+		
 		
 		for (int i = 1; i <= 5; i++) {
 			EditorServer editorServer = new EditorServer("level-" + i, menu, scene, stage);
@@ -25,6 +27,8 @@ public class Server {
 		serverAcceptancesThread.start();
 
 	}
+	
+	
 	
 	public int getPort() {
 		return serverSocket.getLocalPort();

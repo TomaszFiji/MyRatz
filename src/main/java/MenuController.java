@@ -44,11 +44,11 @@ public class MenuController {
 	private Parent root;
 	private static String selectedLevelName = "";
 	private static String selectedEditLevelName = "";
-	private static boolean menuViewUpdated = false;
-	private static boolean serverViewUpdated = false;
-	private static boolean profilesViewUpdated = false;
-	private static boolean levelsViewUpdated = false;
-	private static boolean levelsCreationViewUpdated = false;
+//	private static boolean menuViewUpdated = false;
+//	private static boolean serverViewUpdated = false;
+//	private static boolean profilesViewUpdated = false;
+//	private static boolean levelsViewUpdated = false;
+//	private static boolean levelsCreationViewUpdated = false;
 	private static final int MAX_WIDTH_CREATION = 390;
 	private static final int MAX_HEIGHT_CREATION = 350;
 	private static final int MAX_WIDTH_SELECTION = 180;
@@ -69,7 +69,7 @@ public class MenuController {
 	private static final String RESOURCES_PATH = "src\\main\\resources\\";
 	private static final String SELECT_LEVEL_LABEL = "Select level";
 	private Server server;
-	private Client client;
+	private static Client client;
 
 	@FXML
 	private Label messageOfTheDay;
@@ -145,39 +145,29 @@ public class MenuController {
 	private TextField searchForPortTextField;
 	@FXML
 	private ToggleGroup clientGamemodeTypeGroup;
-
 	@FXML
 	private VBox clientLevelButtonsVBox;
-
 	@FXML
 	private ToggleGroup clientLevelTypeGroup;
-
 	@FXML
 	private BorderPane clientLevelsSelectionRoot;
-
 	@FXML
 	private RadioButton cooperationClientRadioButton;
-
 	@FXML
 	private RadioButton createdLevelsClientRadioButton;
-
 	@FXML
 	private RadioButton defaultLevelsClientRadioButton;
-
 	@FXML
 	private Button deleteButtonClient;
-
 	@FXML
 	private RadioButton mapCreationClientRadioButton;
-
 	@FXML
 	private Button playTheGameClientButton;
-
 	@FXML
 	private RadioButton sabotageClientRadioButton;
-
 	@FXML
 	private Label selectedLevelHeadingClientLabel;
+	
 
 	/**
 	 * Method initialize initial state of each scene.
@@ -187,25 +177,27 @@ public class MenuController {
 	@FXML
 	private void initialize() throws IOException {
 		if (this.profileSelectionRoot != null) {
-			profilesViewUpdated = false;
+			// profilesViewUpdated = false;
 			updateProfilesView();
 		} else if (this.menuRoot != null) {
 //			stage = Menu.getStage();
 //			scene = stage.getScene();
-			menuViewUpdated = false;
+			// menuViewUpdated = false;
 			updateMenuView();
 		} else if (this.serverRoot != null) {
-			serverViewUpdated = false;
+			// serverViewUpdated = false;
 			updateServerView();
 		} else if (this.levelsSelectionRoot != null) {
-			levelsViewUpdated = false;
+			// levelsViewUpdated = false;
 			defaultLevelsRadioButton.getStyleClass().remove("radio-button");
 			defaultLevelsRadioButton.getStyleClass().add("toggle-button");
 			selectedLevelHeadingLabel.setAlignment(Pos.CENTER);
 			updateLevelsView();
 		} else if (this.levelCreationRoot != null) {
-			levelsCreationViewUpdated = false;
+			// levelsCreationViewUpdated = false;
 			updateLevelCreationView();
+		} else if (this.clientLevelsSelectionRoot != null) {
+			updateClientLevelSelection();
 		}
 	}
 
@@ -245,7 +237,7 @@ public class MenuController {
 	 */
 	public void changeToMenu(ActionEvent event) throws IOException {
 		System.out.println("move to menu");
-		menuViewUpdated = false;
+//		menuViewUpdated = false;
 		root = FXMLLoader.load(getClass().getResource("menu2.fxml"));
 		stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
 		scene = new Scene(root);
@@ -257,16 +249,16 @@ public class MenuController {
 	 * Updates menu with name of logged profile.
 	 */
 	public void updateMenuView() {
-		if (!menuViewUpdated) {
-			menuViewUpdated = true;
-			messageOfTheDay.setMaxWidth(700);
-			messageOfTheDay.setText(MOTD.GETMotd());
-			if (ProfileFileReader.getLoggedProfile() != null) {
-				loggedProfileMenuLabel.setText("Welcome " + ProfileFileReader.getLoggedProfile());
-			} else {
-				loggedProfileMenuLabel.setText("You are not logged in. Please select profile");
-			}
+//		if (!menuViewUpdated) {
+//			menuViewUpdated = true;
+		messageOfTheDay.setMaxWidth(700);
+		messageOfTheDay.setText(MOTD.GETMotd());
+		if (ProfileFileReader.getLoggedProfile() != null) {
+			loggedProfileMenuLabel.setText("Welcome " + ProfileFileReader.getLoggedProfile());
+		} else {
+			loggedProfileMenuLabel.setText("You are not logged in. Please select profile");
 		}
+//		}
 	}
 
 	/**
@@ -276,7 +268,7 @@ public class MenuController {
 	 * @throws IOException if fxml file is missing
 	 */
 	public void changeToLevelCreation(ActionEvent event) throws IOException {
-		levelsCreationViewUpdated = false;
+//		levelsCreationViewUpdated = false;
 		System.out.println("moved to level creation");
 
 		root = FXMLLoader.load(Objects.requireNonNull(getClass().getResource("levelCreation.fxml")));
@@ -295,7 +287,7 @@ public class MenuController {
 	 */
 	public void changeToLevelSelection(ActionEvent event) throws IOException {
 		if (ProfileFileReader.getLoggedProfile() != null) {
-			levelsViewUpdated = false;
+//			levelsViewUpdated = false;
 			System.out.println("moved to level selection");
 
 			root = FXMLLoader.load(getClass().getResource("levelsSelection.fxml"));
@@ -316,7 +308,7 @@ public class MenuController {
 	 * @throws IOException if fxml file is missing
 	 */
 	public void changeToProfileSelection(ActionEvent event) throws IOException {
-		profilesViewUpdated = false;
+//		profilesViewUpdated = false;
 		System.out.println("moved to profile selection");
 
 		Parent root = FXMLLoader.load(getClass().getResource("profileSelection.fxml"));
@@ -350,7 +342,7 @@ public class MenuController {
 				ProfileFileReader.loginProfile(newProfileTextField.getText());
 
 				newProfileTextField.setText("");
-				profilesViewUpdated = false;
+//				profilesViewUpdated = false;
 				this.updateProfilesView();
 
 			} else if (!newProfileTextField.getText().equals("")) {
@@ -378,7 +370,7 @@ public class MenuController {
 			ProfileFileReader.logout();
 			HighScores.deleteProfile(ProfileFileReader.getLoggedProfile());
 
-			profilesViewUpdated = false;
+//			profilesViewUpdated = false;
 			this.updateProfilesView();
 		}
 	}
@@ -387,42 +379,42 @@ public class MenuController {
 	 * Update screen. Add buttons, logged profile label, and best scores.
 	 */
 	public void updateProfilesView() {
-		if (!profilesViewUpdated) {
-			profilesViewUpdated = true;
+//		if (!profilesViewUpdated) {
+//			profilesViewUpdated = true;
 
-			updateProfilesScoreTable();
+		updateProfilesScoreTable();
 
-			String[] s;
-			s = ProfileFileReader.getProfiles();
+		String[] s;
+		s = ProfileFileReader.getProfiles();
 
-			profileButtons.getChildren().clear();
-			// Display a button for each profile
-			Button[] profButton = new Button[s.length];
+		profileButtons.getChildren().clear();
+		// Display a button for each profile
+		Button[] profButton = new Button[s.length];
 
-			for (int i = 0; i < profButton.length; i++) {
-				profButton[i] = new Button(s[i]);
-				profButton[i].setMaxSize(MENU_BUTTON1_WIDTH, MENU_BUTTON1_HEIGHT);
-				profButton[i].setMinSize(MENU_BUTTON1_WIDTH, MENU_BUTTON1_HEIGHT);
-				profButton[i].setId(MENU_BUTTON1_ID);
+		for (int i = 0; i < profButton.length; i++) {
+			profButton[i] = new Button(s[i]);
+			profButton[i].setMaxSize(MENU_BUTTON1_WIDTH, MENU_BUTTON1_HEIGHT);
+			profButton[i].setMinSize(MENU_BUTTON1_WIDTH, MENU_BUTTON1_HEIGHT);
+			profButton[i].setId(MENU_BUTTON1_ID);
 
-				profileButtons.getChildren().add(profButton[i]);
+			profileButtons.getChildren().add(profButton[i]);
 
-				final int buttonIndex = i;
+			final int buttonIndex = i;
 
-				// Adds the action for each button
-				profButton[i].setOnAction(event -> {
-					ProfileFileReader.loginProfile(profButton[buttonIndex].getText());
-					profilesViewUpdated = false;
-					updateProfilesView();
-				});
-			}
-
-			if (ProfileFileReader.getLoggedProfile() != null) {
-				loggedProfileLabel.setText(ProfileFileReader.getLoggedProfile());
-			} else {
-				loggedProfileLabel.setText(NO_LOGGED_PROFILE_LABEL);
-			}
+			// Adds the action for each button
+			profButton[i].setOnAction(event -> {
+				ProfileFileReader.loginProfile(profButton[buttonIndex].getText());
+//					profilesViewUpdated = false;
+				updateProfilesView();
+			});
 		}
+
+		if (ProfileFileReader.getLoggedProfile() != null) {
+			loggedProfileLabel.setText(ProfileFileReader.getLoggedProfile());
+		} else {
+			loggedProfileLabel.setText(NO_LOGGED_PROFILE_LABEL);
+		}
+//		}
 	}
 
 	/**
@@ -459,71 +451,71 @@ public class MenuController {
 	 * Updates buttons and score table in level selection menu.
 	 */
 	public void updateLevelsView() {
-		if (!levelsViewUpdated) {
-			levelsViewUpdated = true;
+//		if (!levelsViewUpdated) {
+//			levelsViewUpdated = true;
 
-			levelButtonsVBox.getChildren().clear();
-			levelViewSelection.setImage(null);
-			ArrayList<String> levelNames = null;
-			Button[] levelButtons;
+		levelButtonsVBox.getChildren().clear();
+		levelViewSelection.setImage(null);
+		ArrayList<String> levelNames = null;
+		Button[] levelButtons;
 
-			// Checking which radio button is selected
-			// to choose type of levels to display
-			if (defaultLevelsRadioButton.isSelected()) {
-				levelNames = ProfileFileReader.getDefaultLevelsNames();
-				selectRadioButton(defaultLevelsRadioButton, createdLevelsRadioButton, savedGamesRadioButton);
-				deleteSavedGameButton.setDisable(true);
-			} else if (createdLevelsRadioButton.isSelected()) {
-				levelNames = ProfileFileReader.getCreatedLevelsNames();
-				selectRadioButton(createdLevelsRadioButton, savedGamesRadioButton, defaultLevelsRadioButton);
-				deleteSavedGameButton.setDisable(true);
-			} else if (savedGamesRadioButton.isSelected()) {
-				levelNames = ProfileFileReader.getSavedGamesNames(ProfileFileReader.getLoggedProfile());
-				selectRadioButton(savedGamesRadioButton, defaultLevelsRadioButton, createdLevelsRadioButton);
-				deleteSavedGameButton.setDisable(false);
+		// Checking which radio button is selected
+		// to choose type of levels to display
+		if (defaultLevelsRadioButton.isSelected()) {
+			levelNames = ProfileFileReader.getDefaultLevelsNames();
+			selectRadioButton(defaultLevelsRadioButton, createdLevelsRadioButton, savedGamesRadioButton);
+			deleteSavedGameButton.setDisable(true);
+		} else if (createdLevelsRadioButton.isSelected()) {
+			levelNames = ProfileFileReader.getCreatedLevelsNames();
+			selectRadioButton(createdLevelsRadioButton, savedGamesRadioButton, defaultLevelsRadioButton);
+			deleteSavedGameButton.setDisable(true);
+		} else if (savedGamesRadioButton.isSelected()) {
+			levelNames = ProfileFileReader.getSavedGamesNames(ProfileFileReader.getLoggedProfile());
+			selectRadioButton(savedGamesRadioButton, defaultLevelsRadioButton, createdLevelsRadioButton);
+			deleteSavedGameButton.setDisable(false);
+		}
+
+		levelButtons = new Button[levelNames.size()];
+
+		boolean disableNextButton = false;
+		for (int i = 0; i < levelNames.size(); i++) {
+			// Creating a button for each level
+			levelButtons[i] = new Button(levelNames.get(i));
+			levelButtons[i].setMaxSize(MENU_BUTTON1_WIDTH, MENU_BUTTON1_HEIGHT);
+			levelButtons[i].setMinSize(MENU_BUTTON1_WIDTH, MENU_BUTTON1_HEIGHT);
+			levelButtons[i].setId(MENU_BUTTON1_ID);
+
+			levelButtonsVBox.getChildren().add(levelButtons[i]);
+
+			final int buttonIndex = i;
+			final boolean disableNextButtonAction = disableNextButton;
+			if (disableNextButtonAction) {
+				levelButtons[i].setId(RED_MENU_BUTTON_ID);
 			}
-
-			levelButtons = new Button[levelNames.size()];
-
-			boolean disableNextButton = false;
-			for (int i = 0; i < levelNames.size(); i++) {
-				// Creating a button for each level
-				levelButtons[i] = new Button(levelNames.get(i));
-				levelButtons[i].setMaxSize(MENU_BUTTON1_WIDTH, MENU_BUTTON1_HEIGHT);
-				levelButtons[i].setMinSize(MENU_BUTTON1_WIDTH, MENU_BUTTON1_HEIGHT);
-				levelButtons[i].setId(MENU_BUTTON1_ID);
-
-				levelButtonsVBox.getChildren().add(levelButtons[i]);
-
-				final int buttonIndex = i;
-				final boolean disableNextButtonAction = disableNextButton;
+			levelButtons[i].setOnAction(event -> {
+				// attaching action to each button
 				if (disableNextButtonAction) {
-					levelButtons[i].setId(RED_MENU_BUTTON_ID);
+					alert("You haven't unlocked this level");
+				} else {
+					selectedLevelHeadingLabel.setText(levelButtons[buttonIndex].getText());
+					selectedLevelName = levelButtons[buttonIndex].getText();
+					updateScoreTableLevels();
+
+					levelViewSelection.setImage(getPreview(selectedLevelName, savedGamesRadioButton.isSelected(),
+							MAX_WIDTH_SELECTION, MAX_HEIGHT_SELECTION));
 				}
-				levelButtons[i].setOnAction(event -> {
-					// attaching action to each button
-					if (disableNextButtonAction) {
-						alert("You haven't unlocked this level");
-					} else {
-						selectedLevelHeadingLabel.setText(levelButtons[buttonIndex].getText());
-						selectedLevelName = levelButtons[buttonIndex].getText();
-						updateScoreTableLevels();
+			});
 
-						levelViewSelection.setImage(getPreview(selectedLevelName, savedGamesRadioButton.isSelected(),
-								MAX_WIDTH_SELECTION, MAX_HEIGHT_SELECTION));
-					}
-				});
-
-				if (defaultLevelsRadioButton.isSelected()) {
-					// levelButtons[i].setDisable(disableNextButton);
-					int score = ProfileFileReader.getBestScore(ProfileFileReader.getLoggedProfile(),
-							levelButtons[i].getText());
-					if (score == 0) {
-						disableNextButton = true;
-					}
+			if (defaultLevelsRadioButton.isSelected()) {
+				// levelButtons[i].setDisable(disableNextButton);
+				int score = ProfileFileReader.getBestScore(ProfileFileReader.getLoggedProfile(),
+						levelButtons[i].getText());
+				if (score == 0) {
+					disableNextButton = true;
 				}
 			}
 		}
+//		}
 	}
 
 	/**
@@ -594,7 +586,7 @@ public class MenuController {
 		imageToDelete.delete();
 
 		selectedLevelName = "";
-		levelsViewUpdated = false;
+//		levelsViewUpdated = false;
 		updateLevelsView();
 	}
 
@@ -619,7 +611,7 @@ public class MenuController {
 	 * Change type of level buttons displayed.
 	 */
 	public void levelTypeChanged() {
-		levelsViewUpdated = false;
+//		levelsViewUpdated = false;
 		selectedLevelName = "";
 		selectedLevelHeadingLabel.setText(SELECT_LEVEL_LABEL);
 		updateLevelsView();
@@ -678,58 +670,55 @@ public class MenuController {
 	 */
 	@FXML
 	public void updateLevelCreationView() {
-		if (!levelsCreationViewUpdated) {
-			levelsCreationViewUpdated = true;
+//		if (!levelsCreationViewUpdated) {
+//			levelsCreationViewUpdated = true;
 
-			levelsButtonsLevelCreationVBox.getChildren().clear();
-			levelView.setImage(null);
+		levelsButtonsLevelCreationVBox.getChildren().clear();
+		levelView.setImage(null);
 
-			ArrayList<String> levelNames = null;
-			Button[] levelButtons;
+		ArrayList<String> levelNames = null;
+		Button[] levelButtons;
 
-			// Checking which radio button is selected
-			// to display level buttons
-			if (editDefaultLevelsRadioButton.isSelected()) {
-				levelNames = ProfileFileReader.getDefaultLevelsNames();
-				selectRadioButton(editDefaultLevelsRadioButton, editCustomLevelsRadioButton,
-						editCustomLevelsRadioButton);
-			} else if (editCustomLevelsRadioButton.isSelected()) {
-				levelNames = ProfileFileReader.getCreatedLevelsNames();
-				selectRadioButton(editCustomLevelsRadioButton, editDefaultLevelsRadioButton,
-						editDefaultLevelsRadioButton);
+		// Checking which radio button is selected
+		// to display level buttons
+		if (editDefaultLevelsRadioButton.isSelected()) {
+			levelNames = ProfileFileReader.getDefaultLevelsNames();
+			selectRadioButton(editDefaultLevelsRadioButton, editCustomLevelsRadioButton, editCustomLevelsRadioButton);
+		} else if (editCustomLevelsRadioButton.isSelected()) {
+			levelNames = ProfileFileReader.getCreatedLevelsNames();
+			selectRadioButton(editCustomLevelsRadioButton, editDefaultLevelsRadioButton, editDefaultLevelsRadioButton);
 
-			}
-
-			if (levelNames.size() > CUSTOM_LEVELS_LIMIT) {
-				editCreatedLevelButton.setDisable(true);
-				openLevelEditorButton.setDisable(true);
-			}
-			levelButtons = new Button[levelNames.size()];
-
-			for (int i = 0; i < levelNames.size(); i++) {
-				levelButtons[i] = new Button(levelNames.get(i));
-				levelButtons[i].setMaxSize(MENU_BUTTON1_WIDTH, MENU_BUTTON1_HEIGHT);
-				levelButtons[i].setMinSize(MENU_BUTTON1_WIDTH, MENU_BUTTON1_HEIGHT);
-				levelButtons[i].setId(MENU_BUTTON1_ID);
-
-				levelsButtonsLevelCreationVBox.getChildren().add(levelButtons[i]);
-
-				final int buttonIndex = i;
-				final int levelsLimit = levelNames.size();
-				levelButtons[i].setOnAction(event -> {
-					if (editCustomLevelsRadioButton.isSelected()) {
-						deleteLevelButton.setDisable(false);
-					}
-
-					selectedEditLevelName = levelButtons[buttonIndex].getText();
-					if (levelsLimit <= CUSTOM_LEVELS_LIMIT) {
-						editCreatedLevelButton.setDisable(false);
-					}
-					levelView.setImage(
-							getPreview(selectedEditLevelName, false, MAX_WIDTH_CREATION, MAX_HEIGHT_CREATION));
-				});
-			}
 		}
+
+		if (levelNames.size() > CUSTOM_LEVELS_LIMIT) {
+			editCreatedLevelButton.setDisable(true);
+			openLevelEditorButton.setDisable(true);
+		}
+		levelButtons = new Button[levelNames.size()];
+
+		for (int i = 0; i < levelNames.size(); i++) {
+			levelButtons[i] = new Button(levelNames.get(i));
+			levelButtons[i].setMaxSize(MENU_BUTTON1_WIDTH, MENU_BUTTON1_HEIGHT);
+			levelButtons[i].setMinSize(MENU_BUTTON1_WIDTH, MENU_BUTTON1_HEIGHT);
+			levelButtons[i].setId(MENU_BUTTON1_ID);
+
+			levelsButtonsLevelCreationVBox.getChildren().add(levelButtons[i]);
+
+			final int buttonIndex = i;
+			final int levelsLimit = levelNames.size();
+			levelButtons[i].setOnAction(event -> {
+				if (editCustomLevelsRadioButton.isSelected()) {
+					deleteLevelButton.setDisable(false);
+				}
+
+				selectedEditLevelName = levelButtons[buttonIndex].getText();
+				if (levelsLimit <= CUSTOM_LEVELS_LIMIT) {
+					editCreatedLevelButton.setDisable(false);
+				}
+				levelView.setImage(getPreview(selectedEditLevelName, false, MAX_WIDTH_CREATION, MAX_HEIGHT_CREATION));
+			});
+		}
+//		}
 	}
 
 	/**
@@ -774,7 +763,7 @@ public class MenuController {
 		ProfileFileReader.deleteLevel(selectedEditLevelName);
 		HighScores.deleteLevel(selectedEditLevelName);
 		deleteLevelButton.setDisable(true);
-		levelsCreationViewUpdated = false;
+//		levelsCreationViewUpdated = false;
 		updateLevelCreationView();
 	}
 
@@ -786,7 +775,7 @@ public class MenuController {
 
 		deleteLevelButton.setDisable(true);
 		editCreatedLevelButton.setDisable(true);
-		levelsCreationViewUpdated = false;
+//		levelsCreationViewUpdated = false;
 		selectedEditLevelName = "";
 		updateLevelCreationView();
 	}
@@ -826,7 +815,7 @@ public class MenuController {
 
 	public void runServer(ActionEvent event) throws IOException {
 		System.out.println("move to server");
-		serverViewUpdated = false;
+//		serverViewUpdated = false;
 		root = FXMLLoader.load(getClass().getResource("serverRunningScene.fxml"));
 		stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
 		scene = new Scene(root);
@@ -843,13 +832,13 @@ public class MenuController {
 		server = new Server(this, scene, stage);
 		serverIPLabel.setText(InetAddress.getLocalHost().getHostAddress());
 		serverPortLabel.setText(Integer.toString(server.getPort()));
-		serverViewUpdated = true;
+//		serverViewUpdated = true;
 	}
 
 	public void closeServer(ActionEvent event) throws IOException {
 		System.out.println("move to menu");
 		server.closeServer();
-		menuViewUpdated = false;
+//		menuViewUpdated = false;
 		root = FXMLLoader.load(getClass().getResource("menu2.fxml"));
 		stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
 		scene = new Scene(root);
@@ -873,43 +862,147 @@ public class MenuController {
 	}
 
 	@FXML
-	public void searchForServer(ActionEvent event) {
-		try {
-		client = new Client(searchForIPTextField.getText(), parseInt(searchForPortTextField.getText()));
-		changeToClientLevelSelection(event);
+	public void searchForServer(ActionEvent event) throws NumberFormatException, UnknownHostException, IOException {
+		// try {
+		Client client = new Client(searchForIPTextField.getText(), parseInt(searchForPortTextField.getText()));
+		this.client = client;
+		if (this.client == null) {
+			System.out.println("this.client is null");
+		} else {
+			System.out.println("this.client is not null");
 		}
-		catch (Exception e) {
-			cantFindServerLabel.setText("Can't connect to this server");
+		if (client == null) {
+			System.out.println("client is null");
+		} else {
+			System.out.println("client is not null");
+			changeToClientLevelSelection(event);
 		}
+//		} catch (Exception e) {
+//			cantFindServerLabel.setText("Can't connect to this server");
+//		}
 	}
-	
+
 	public void changeToClientLevelSelection(ActionEvent event) throws IOException {
-		System.out.println("move to search for server");
-		// serverViewUpdated = false;
-		root = FXMLLoader.load(getClass().getResource("clientLevelSelection.fxml"));
-		stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-		scene = new Scene(root);
-		stage.setScene(scene);
-		stage.show();
-	}
-	
-	public void updateClientLevelSelection() {
 		
+		System.out.println("move to search for server");
+		if (this.client == null) {
+			System.out.println("this.client is null");
+		} else {
+			System.out.println("this.client is not null");
+		}
+		// serverViewUpdated = false;
+		System.out.println("ttest0");
+		root = FXMLLoader.load(getClass().getResource("clientLevelSelection.fxml"));
+		System.out.println("ttest1");
+		stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+		System.out.println("ttest2");
+		scene = new Scene(root);
+		System.out.println("ttest3");
+		stage.setScene(scene);
+		System.out.println("ttest4");
+		stage.show();
+		System.out.println("ttest5");
+		if (this.client == null) {
+			System.out.println("this.client is null aft1");
+		} else {
+			System.out.println("this.client is not null aft1");
+		}
+	}
+
+	public void updateClientLevelSelection() {
+		if (this.client == null) {
+			System.out.println("this.client is null");
+		} else {
+			System.out.println("this.client is not null");
+		}
+		clientLevelButtonsVBox.getChildren().clear();
+		ArrayList<String> levelNames = null;
+		Button[] levelButtons;
+
+		// Checking which radio button is selected
+		// to choose type of levels to display
+		if (defaultLevelsClientRadioButton.isSelected()) {
+
+			// TODO : implement these methods
+			levelNames = client.getDefaultLevelsNames();
+			selectRadioButton(defaultLevelsClientRadioButton, createdLevelsClientRadioButton,
+					createdLevelsClientRadioButton);
+
+			deleteButtonClient.setDisable(true);
+
+		} else if (createdLevelsClientRadioButton.isSelected()) {
+
+			levelNames = client.getCreatedLevelsNames();
+			selectRadioButton(createdLevelsClientRadioButton, defaultLevelsClientRadioButton,
+					defaultLevelsClientRadioButton);
+
+			deleteButtonClient.setDisable(true);
+		}
+		
+		if (cooperationClientRadioButton.isSelected()) {
+
+			selectRadioButton(cooperationClientRadioButton, sabotageClientRadioButton,
+					mapCreationClientRadioButton);
+
+			deleteButtonClient.setDisable(true);
+
+		} else if (sabotageClientRadioButton.isSelected()) {
+
+			selectRadioButton(sabotageClientRadioButton, cooperationClientRadioButton,
+					mapCreationClientRadioButton);
+
+			deleteButtonClient.setDisable(true);
+		} else if (mapCreationClientRadioButton.isSelected()) {
+
+			selectRadioButton(mapCreationClientRadioButton, cooperationClientRadioButton,
+					sabotageClientRadioButton);
+
+			deleteButtonClient.setDisable(true);
+		}
+
+		levelButtons = new Button[levelNames.size()];
+
+		for (int i = 0; i < levelNames.size(); i++) {
+			// Creating a button for each level
+			levelButtons[i] = new Button(levelNames.get(i));
+			levelButtons[i].setMaxSize(MENU_BUTTON1_WIDTH, MENU_BUTTON1_HEIGHT);
+			levelButtons[i].setMinSize(MENU_BUTTON1_WIDTH, MENU_BUTTON1_HEIGHT);
+			levelButtons[i].setId(MENU_BUTTON1_ID);
+
+			clientLevelButtonsVBox.getChildren().add(levelButtons[i]);
+
+			final int buttonIndex = i;
+
+			levelButtons[i].setOnAction(event -> {
+				// attaching action to each button
+				selectedLevelHeadingClientLabel.setText(levelButtons[buttonIndex].getText());
+				selectedLevelName = levelButtons[buttonIndex].getText();
+			});
+		}
 	}
 
 	@FXML
 	public void deleteButtonClient(ActionEvent event) {
 
-    }
+	}
 
-    @FXML
-    public void levelTypeChanged(ActionEvent event) {
+	@FXML
+	public void levelTypeChanged(ActionEvent event) {
 
-    }
+	}
 
-    @FXML
-    void playTheGameClient(ActionEvent event) {
+	@FXML
+	void playTheGameClient(ActionEvent event) {
 
-    }
+	}
+	@FXML
+	void clientLevelTypeChanged(ActionEvent event) {
+		updateClientLevelSelection();
+	}
+
+	@FXML
+	void clientGamemodeTypeChanged(ActionEvent event) {
+		updateClientLevelSelection();
+	}
 
 }

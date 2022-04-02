@@ -19,13 +19,13 @@
          </padding>
          <VBox alignment="CENTER" prefHeight="82.0" prefWidth="206.0" spacing="3.0">
             <children>
-               <RadioButton id="radio-button" fx:id="cooperationClientRadioButton" mnemonicParsing="false" onAction="#levelTypeChanged" prefHeight="24.0" prefWidth="125.0" text="    Cooperation" textAlignment="CENTER">
+               <RadioButton id="radio-button" fx:id="cooperationClientRadioButton" mnemonicParsing="false" onAction="#clientGamemodeTypeChanged" prefHeight="24.0" prefWidth="125.0" selected="true" text="    Cooperation" textAlignment="CENTER">
                   <toggleGroup>
                      <ToggleGroup fx:id="clientGamemodeTypeGroup" />
                   </toggleGroup>
                </RadioButton>
-               <RadioButton id="radio-button" fx:id="sabotageClientRadioButton" layoutX="51.0" layoutY="39.0" mnemonicParsing="false" onAction="#levelTypeChanged" prefHeight="24.0" prefWidth="125.0" text="     Sabotage" toggleGroup="$clientGamemodeTypeGroup" />
-               <RadioButton id="radio-button" fx:id="mapCreationClientRadioButton" layoutX="51.0" layoutY="51.0" mnemonicParsing="false" onAction="#levelTypeChanged" prefHeight="24.0" prefWidth="125.0" text="    Map Creation" toggleGroup="$clientGamemodeTypeGroup" />
+               <RadioButton id="radio-button" fx:id="sabotageClientRadioButton" layoutX="51.0" layoutY="39.0" mnemonicParsing="false" onAction="#clientGamemodeTypeChanged" prefHeight="24.0" prefWidth="125.0" text="     Sabotage" toggleGroup="$clientGamemodeTypeGroup" />
+               <RadioButton id="radio-button" fx:id="mapCreationClientRadioButton" layoutX="51.0" layoutY="51.0" mnemonicParsing="false" onAction="#clientGamemodeTypeChanged" prefHeight="24.0" prefWidth="125.0" text="    Map Creation" toggleGroup="$clientGamemodeTypeGroup" />
             </children>
          </VBox>
          <Button mnemonicParsing="false" onAction="#changeToMenu" prefHeight="39.0" prefWidth="187.0" text="MainMenu" />
@@ -43,12 +43,12 @@
                <Insets top="6.0" />
             </padding>
             <children>
-               <RadioButton id="radio-button" fx:id="defaultLevelsClientRadioButton" mnemonicParsing="false" onAction="#levelTypeChanged" prefHeight="24.0" prefWidth="125.0" selected="true" text="  Default Levels">
+               <RadioButton id="radio-button" fx:id="defaultLevelsClientRadioButton" mnemonicParsing="false" onAction="#clientLevelTypeChanged" prefHeight="24.0" prefWidth="125.0" selected="true" text="  Default Levels">
                   <toggleGroup>
                      <ToggleGroup fx:id="clientLevelTypeGroup" />
                   </toggleGroup>
                </RadioButton>
-               <RadioButton id="radio-button" fx:id="createdLevelsClientRadioButton" mnemonicParsing="false" onAction="#levelTypeChanged" prefHeight="24.0" prefWidth="125.0" text="  Created Levels" toggleGroup="$clientLevelTypeGroup" />
+               <RadioButton id="radio-button" fx:id="createdLevelsClientRadioButton" mnemonicParsing="false" onAction="#clientLevelTypeChanged" prefHeight="24.0" prefWidth="125.0" text="  Created Levels" toggleGroup="$clientLevelTypeGroup" />
             </children>
          </VBox>
          <VBox fx:id="clientLevelButtonsVBox" alignment="TOP_CENTER" maxHeight="267.0" prefHeight="261.0" prefWidth="175.0" spacing="2.0">

@@ -13,16 +13,11 @@ public class EditorServerThreadObjectOutput implements Runnable {
 	private ObjectOutputStream outObject = null;
 	private boolean isReady;
 
-	public EditorServerThreadObjectOutput(EditorServer server, Socket client) {
+	public EditorServerThreadObjectOutput(EditorServer server, Socket client) throws IOException {
 		this.server = server;
 		this.client = client;
 		this.isReady = false;
-
-		try {
-			this.outObject = new ObjectOutputStream(client.getOutputStream());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		this.outObject = new ObjectOutputStream(client.getOutputStream());
 	}
 
 	public void run() {
