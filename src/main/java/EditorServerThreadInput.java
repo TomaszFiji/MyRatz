@@ -5,7 +5,7 @@ import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 
-public class EditorServerThreadInput implements Runnable{
+public class EditorServerThreadInput implements Runnable {
 	private EditorServer server;
 	private Socket client;
 	private BufferedReader in = null;
@@ -37,6 +37,13 @@ public class EditorServerThreadInput implements Runnable{
 					break;
 				case "tile":
 					this.server.tileAdded(inputs);
+					break;
+				case "size":
+					this.server.changeLevelSize(inputs);
+					break;
+				case "settings":
+					this.server.saveSettings(inputs);
+					break;
 				}
 			}
 		} catch (IOException e) {

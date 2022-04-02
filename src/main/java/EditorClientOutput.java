@@ -41,4 +41,19 @@ public class EditorClientOutput implements Runnable {
 			System.out.println("Sent: nothing");			
 		}
 	}
+	
+	public void changeLevelSize(int width, int height) {
+		System.out.print("Sent: size " + width + " " + height + "\n");
+		out.println("size " + width + " " + height);
+	}
+
+	public void saveSettings(int maxRatsLocal, int parTimeLocal, int[] dropRatesLocal) {
+		String output = "settings " + maxRatsLocal + " " + parTimeLocal;
+		for (int i : dropRatesLocal) {
+			output += " " + i;
+			System.out.println("drop: " + i + " -->");
+		}
+		System.out.println("Sent: " + output);
+		out.println(output);
+	}
 }

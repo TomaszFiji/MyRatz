@@ -113,7 +113,7 @@ public class EditorClient {
 	public void runTheGame(String selectedEditLevelName, boolean isDefaultLevel, Scene scene, Stage stage,
 			MenuController menu) throws IOException {
 
-		FXMLLoader loader = new FXMLLoader(getClass().getResource("editor.fxml"));
+		FXMLLoader loader = new FXMLLoader(getClass().getResource("editorClient.fxml"));
 
 		if (isDefaultLevel) {
 			LevelFileReader.loadNormalLevelFile("src/main/resources/levels/default_levels/" + selectedEditLevelName,
@@ -132,7 +132,7 @@ public class EditorClient {
 	}
 
 	public void runClient() throws IOException, ClassNotFoundException, InterruptedException {
-		Socket server = new Socket(SERVER_IP, SERVER_PORT);
+		Socket server = new Socket(SERVER_IP, 50355);
 		clientListener = new EditorClientListener(this, server);
 		clientOutput = new EditorClientOutput(this, server);
 		Thread clientListenerThread = new Thread(clientListener);
@@ -145,6 +145,10 @@ public class EditorClient {
 
 	public void setTileMap(Tile[][] tileMap) {
 		this.tileMap = tileMap.clone();
+		this.width = tileMap.length;
+		this.height = tileMap[0].length;
+		widthTextField.setText(String.valueOf(width));
+		heightTextField.setText(String.valueOf(height));
 		System.out.println("Tile map changed");
 		renderBoard();
 	}
@@ -473,17 +477,27 @@ public class EditorClient {
 	private void renderBoard() {
 		GraphicsContext gc = levelCanvas.getGraphicsContext2D();
 
-//		gc.setFill(Color.web("#2d4945"));
-//		gc.fillRect(0, 0, levelCanvas.getWidth(), levelCanvas.getHeight());
+		gc.setFill(Color.web("#2d4945"));
+		gc.fillRect(width * TILE_SIZE, 0, levelCanvas.getWidth(), levelCanvas.getHeight());
+		gc.fillRect(0, height * TILE_SIZE, levelCanvas.getWidth(), levelCanvas.getHeight());
 
 		if (tileMap != null) {
+			// TODO fix magic nums
 			for (int i = 0; i < tileMap.length; i++) {
 				for (int j = 0; j < tileMap[i].length; j++) {
 					tileMap[i][j].draw(i, j, gc);
+
 				}
 			}
 		}
 		System.out.println("Finished rendering \n");
+	}
+
+	public void requestChangeLevelSize() {
+		int newWidth = parseInt(widthTextField.getText());
+		int newHeight = parseInt(heightTextField.getText());
+
+		clientOutput.changeLevelSize(newWidth, newHeight);
 	}
 
 	/**
@@ -500,7 +514,7 @@ public class EditorClient {
 				sizeChangeErrorText.setText("Maximum map size: 16x14");
 			} else {
 				sizeChangeErrorText.setText("");
-				changeTileMapSize(newWidth, newHeight);
+				requestChangeLevelSize();
 			}
 		} catch (NumberFormatException nfe) {
 			sizeChangeErrorText.setText("Please enter an integer number");
@@ -514,23 +528,16 @@ public class EditorClient {
 	 * @param newWidth  width of new tile map.
 	 * @param newHeight height of new tile map.
 	 */
-	private void changeTileMapSize(int newWidth, int newHeight) {
-		Tile[][] newTileMap = new Tile[newWidth][newHeight];
-
-		for (int i = 0; i < newWidth; i++) {
-			for (int j = 0; j < newHeight; j++) {
-				if ((i >= tileMap.length) || (j >= tileMap[0].length) || (i == newWidth - 1) || (j == newHeight - 1)) {
-					newTileMap[i][j] = new Grass();
-				} else {
-					newTileMap[i][j] = tileMap[i][j];
-				}
-			}
-		}
-		tileMap = newTileMap;
-		width = newWidth;
-		height = newHeight;
-		renderBoard();
-	}
+	/*
+	 * private void changeTileMapSize(int newWidth, int newHeight) { Tile[][]
+	 * newTileMap = new Tile[newWidth][newHeight];
+	 * 
+	 * for (int i = 0; i < newWidth; i++) { for (int j = 0; j < newHeight; j++) { if
+	 * ((i >= tileMap.length) || (j >= tileMap[0].length) || (i == newWidth - 1) ||
+	 * (j == newHeight - 1)) { newTileMap[i][j] = new Grass(); } else {
+	 * newTileMap[i][j] = tileMap[i][j]; } } } tileMap = newTileMap; width =
+	 * newWidth; height = newHeight; renderBoard(); }
+	 */
 
 	/**
 	 * Displays level settings box when button is pressed.
@@ -541,24 +548,39 @@ public class EditorClient {
 		settingsDialoguePane.setVisible(true);
 	}
 
+	public void saveSettings(Settings settings) {
+		maxRatTextField.setText(String.valueOf(settings.getMaxRats()));
+		gameTimerTextField.setText(String.valueOf(settings.getParTime()));
+		for (int i = 0; i < settings.getDropRates().length; i++) {
+			powerTextFields[i].setText(String.valueOf(settings.getDropRate(i)));
+		}
+		
+		maxRats = settings.getMaxRats();
+		parTime = settings.getParTime();
+		for (int i = 0; i < dropRates.length; i++) {
+			dropRates[i] = settings.getDropRate(i);
+		}
+	}
+
 	/**
 	 * Saves level settings when button is pressed, unless the user has made invalid
 	 * input. If they have, it prompts the user to enter something else
 	 */
 	public void saveSettings() {
 		try {
-			maxRats = parseInt(maxRatTextField.getText());
-			parTime = parseInt(gameTimerTextField.getText());
+			int maxRatsLocal = parseInt(maxRatTextField.getText());
+			int parTimeLocal = parseInt(gameTimerTextField.getText());
 			boolean wrongDropRate = false;
-			for (int i = 0; i < dropRates.length; i++) {
-				dropRates[i] = parseInt(powerTextFields[i].getText());
-				if (dropRates[i] < 0) {
+			int[] dropRatesLocal = new int[dropRates.length];
+			for (int i = 0; i < dropRatesLocal.length; i++) {
+				dropRatesLocal[i] = parseInt(powerTextFields[i].getText());
+				if (dropRatesLocal[i] < 0) {
 					wrongDropRate = true;
 				}
 			}
-			if (maxRats <= getNumOfRats()) {
+			if (maxRatsLocal <= getNumOfRats()) {
 				settingsErrorText.setText("Please enter a valid number of rats.");
-			} else if (parTime < 0) {
+			} else if (parTimeLocal < 0) {
 				settingsErrorText.setText("Please enter a valid game time.");
 			} else if (wrongDropRate) {
 				settingsErrorText.setText("Please enter valid drop rates.");
@@ -568,9 +590,24 @@ public class EditorClient {
 				setupCanvasDrawing();
 				setupCanvasDragBehaviour();
 				setButtonDisabling(false);
+				clientOutput.saveSettings(maxRatsLocal, parTimeLocal, dropRatesLocal);
 			}
 		} catch (NumberFormatException nfe) {
 			settingsErrorText.setText("Please enter integer numbers only.");
+		}
+	}
+	
+	public void closeSettings() {
+		settingsErrorText.setText("");
+		settingsDialoguePane.setVisible(false);
+		setupCanvasDrawing();
+		setupCanvasDragBehaviour();
+		setButtonDisabling(false);
+		
+		maxRatTextField.setText(String.valueOf(maxRats));
+		gameTimerTextField.setText(String.valueOf(parTime));
+		for (int i = 0; i < dropRates.length; i++) {
+			powerTextFields[i].setText(String.valueOf(dropRates[i]));
 		}
 	}
 

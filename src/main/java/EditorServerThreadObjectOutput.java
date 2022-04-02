@@ -26,22 +26,27 @@ public class EditorServerThreadObjectOutput implements Runnable {
 	}
 
 	public void run() {
+	}
+
+	public void sendMap() {
 		try {
 			System.out.println("Sending map");
 			Tile[][] temp = server.getTileMap();
-//			for (int i = 0; i < temp.length; i++) {
-//				for (int j = 0; j < temp[i].length; j++) {
-//					System.out.print(temp[i][j].getClass().getName() + " ");
-//				}
-//				System.out.println();
-//			}
 			outObject.writeObject(temp);
 			outObject.reset();
-//			System.out.println(server.getTileMap() + "   " + temp.equals(server.getTileMap()) + "   " + temp);
 		} catch (InterruptedException | IOException e) {
 			e.printStackTrace();
 		}
+	}
 
+	public void sendSettings(Settings settings) {
+		try {
+			System.out.println("Sending settings");
+			outObject.writeObject(settings);
+			outObject.reset();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 }

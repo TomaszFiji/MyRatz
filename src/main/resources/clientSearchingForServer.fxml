@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox fx:id="clientSearchingForServerRoot" alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="500.0" prefWidth="800.0" spacing="2.0" stylesheets="@menu.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="MenuController">
+   <AnchorPane prefHeight="160.0" prefWidth="800.0" />
+   <Label text="Search for a server" />
+   <HBox alignment="CENTER" prefHeight="62.0" prefWidth="800.0" spacing="10.0">
+      <children>
+         <Label text="IP:   " />
+         <TextField fx:id="searchForIPTextField" text="localhost" />
+      </children>
+   </HBox>
+   <HBox alignment="CENTER" layoutX="10.0" layoutY="184.0" prefHeight="57.0" prefWidth="800.0" spacing="10.0">
+      <children>
+         <Label text="Port: " />
+         <TextField fx:id="searchForPortTextField" />
+      </children>
+   </HBox>
+   <Label fx:id="cantFindServerLabel" prefHeight="23.0" prefWidth="321.0" />
+   <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="10.0">
+      <children>
+         <Button mnemonicParsing="false" onAction="#changeToMenu" prefHeight="39.0" prefWidth="180.0" text="Go back" />
+         <Button layoutX="10.0" layoutY="10.0" mnemonicParsing="false" onAction="#searchForServer" prefHeight="39.0" prefWidth="180.0" text="Search" />
+      </children>
+   </HBox>
+   <AnchorPane prefHeight="100.0" prefWidth="200.0">
+      <ImageView fitHeight="127.0" fitWidth="266.0" layoutX="115.0" layoutY="9.0" pickOnBounds="true" preserveRatio="true">
+         <Image url="@adultmaleEAST.png" />
+      </ImageView>
+      <ImageView fitHeight="127.0" fitWidth="266.0" layoutX="337.0" layoutY="9.0" pickOnBounds="true" preserveRatio="true">
+         <Image url="@adultmaleEAST.png" />
+      </ImageView>
+      <ImageView fitHeight="127.0" fitWidth="266.0" layoutX="563.0" layoutY="9.0" pickOnBounds="true" preserveRatio="true">
+         <Image url="@adultmaleEAST.png" />
+      </ImageView>
+   </AnchorPane>
+</VBox>

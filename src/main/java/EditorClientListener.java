@@ -23,7 +23,12 @@ public class EditorClientListener implements Runnable {
 		try {
 			while (true) {
 
-				Tile[][] tileMap = ((Tile[][]) inObject.readObject());
+				Object temp = inObject.readObject();
+				if (temp instanceof Tile[][] && temp != null) {
+					editorClient.setTileMap((Tile[][]) temp);
+				} else if (temp instanceof Settings) {
+					editorClient.saveSettings((Settings) temp);
+				}
 //				for (int i = 0; i < tileMap.length; i++) {
 //					for (int j = 0; j < tileMap[i].length; j++) {
 //						System.out.print(tileMap[i][j].getClass().getName() + " ");
@@ -32,9 +37,6 @@ public class EditorClientListener implements Runnable {
 //				}
 //				System.out.println(editorClient.getTileMap() + "   " + tileMap.equals(editorClient.getTileMap()) + "   "
 //						+ tileMap);
-				if (tileMap != null) {
-					editorClient.setTileMap(tileMap);
-				}
 			}
 		} catch (IOException | ClassNotFoundException e) {
 			e.printStackTrace();

@@ -1,6 +1,9 @@
+import static java.lang.Integer.parseInt;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Objects;
 
@@ -42,6 +45,7 @@ public class MenuController {
 	private static String selectedLevelName = "";
 	private static String selectedEditLevelName = "";
 	private static boolean menuViewUpdated = false;
+	private static boolean serverViewUpdated = false;
 	private static boolean profilesViewUpdated = false;
 	private static boolean levelsViewUpdated = false;
 	private static boolean levelsCreationViewUpdated = false;
@@ -64,11 +68,15 @@ public class MenuController {
 	private static final String LEVELS_IMAGES = "levels_images\\";
 	private static final String RESOURCES_PATH = "src\\main\\resources\\";
 	private static final String SELECT_LEVEL_LABEL = "Select level";
+	private Server server;
+	private Client client;
 
 	@FXML
 	private Label messageOfTheDay;
 	@FXML
 	private VBox menuRoot;
+	@FXML
+	private VBox serverRoot;
 	@FXML
 	private BorderPane profileSelectionRoot;
 	@FXML
@@ -112,6 +120,12 @@ public class MenuController {
 	@FXML
 	private Label loggedProfileLabel;
 	@FXML
+	private Label serverIPLabel;
+	@FXML
+	private Label serverPortLabel;
+	@FXML
+	private Label cantFindServerLabel;
+	@FXML
 	private TextField newProfileTextField;
 	@FXML
 	private VBox profileButtons;
@@ -123,12 +137,55 @@ public class MenuController {
 	private Button removeProfileButton;
 	@FXML
 	private Button openLevelEditorButton;
+	@FXML
+	private VBox clientSearchingForServerRoot;
+	@FXML
+	private TextField searchForIPTextField;
+	@FXML
+	private TextField searchForPortTextField;
+	@FXML
+	private ToggleGroup clientGamemodeTypeGroup;
+
+	@FXML
+	private VBox clientLevelButtonsVBox;
+
+	@FXML
+	private ToggleGroup clientLevelTypeGroup;
+
+	@FXML
+	private BorderPane clientLevelsSelectionRoot;
+
+	@FXML
+	private RadioButton cooperationClientRadioButton;
+
+	@FXML
+	private RadioButton createdLevelsClientRadioButton;
+
+	@FXML
+	private RadioButton defaultLevelsClientRadioButton;
+
+	@FXML
+	private Button deleteButtonClient;
+
+	@FXML
+	private RadioButton mapCreationClientRadioButton;
+
+	@FXML
+	private Button playTheGameClientButton;
+
+	@FXML
+	private RadioButton sabotageClientRadioButton;
+
+	@FXML
+	private Label selectedLevelHeadingClientLabel;
 
 	/**
 	 * Method initialize initial state of each scene.
+	 * 
+	 * @throws IOException
 	 */
 	@FXML
-	private void initialize() {
+	private void initialize() throws IOException {
 		if (this.profileSelectionRoot != null) {
 			profilesViewUpdated = false;
 			updateProfilesView();
@@ -137,6 +194,9 @@ public class MenuController {
 //			scene = stage.getScene();
 			menuViewUpdated = false;
 			updateMenuView();
+		} else if (this.serverRoot != null) {
+			serverViewUpdated = false;
+			updateServerView();
 		} else if (this.levelsSelectionRoot != null) {
 			levelsViewUpdated = false;
 			defaultLevelsRadioButton.getStyleClass().remove("radio-button");
@@ -755,6 +815,7 @@ public class MenuController {
 		try {
 			ProfileFileReader.saveDataToFile();
 			HighScores.saveDataToFile();
+			server.closeServer();
 		} catch (IOException e) {
 			alert("Scores didn't saved. Please check source files");
 			e.printStackTrace();
@@ -764,18 +825,91 @@ public class MenuController {
 	}
 
 	public void runServer(ActionEvent event) throws IOException {
-		System.out.println("run server");
-		changeToMenu(event);
-		EditorServer s = new EditorServer(this);
-		s.runServer("level-3", true, scene, stage, this);
-		s.runTheGame("level-3", true, scene, stage, this);
+		System.out.println("move to server");
+		serverViewUpdated = false;
+		root = FXMLLoader.load(getClass().getResource("serverRunningScene.fxml"));
+		stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+		scene = new Scene(root);
+		stage.setScene(scene);
+		stage.show();
+//		System.out.println("run server");
+//		changeToMenu(event);
+//		EditorServer s = new EditorServer("level-3",this, scene, stage);
+//		s.runServer();
+//		s.runTheGame();
+	}
+
+	private void updateServerView() throws IOException {
+		server = new Server(this, scene, stage);
+		serverIPLabel.setText(InetAddress.getLocalHost().getHostAddress());
+		serverPortLabel.setText(Integer.toString(server.getPort()));
+		serverViewUpdated = true;
+	}
+
+	public void closeServer(ActionEvent event) throws IOException {
+		System.out.println("move to menu");
+		server.closeServer();
+		menuViewUpdated = false;
+		root = FXMLLoader.load(getClass().getResource("menu2.fxml"));
+		stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+		scene = new Scene(root);
+		stage.setScene(scene);
+		stage.show();
 	}
 
 	public void runClient(ActionEvent event) throws IOException, ClassNotFoundException, InterruptedException {
-		System.out.println("run client");
-		changeToMenu(event);
-		EditorClient c = new EditorClient(this);
-		c.runTheGame("level-3", true, scene, stage, this);
-		c.runClient();
+		System.out.println("move to search for server");
+		// serverViewUpdated = false;
+		root = FXMLLoader.load(getClass().getResource("clientSearchingForServer.fxml"));
+		stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+		scene = new Scene(root);
+		stage.setScene(scene);
+		stage.show();
+//		System.out.println("run client");
+//		changeToMenu(event);
+//		EditorClient c = new EditorClient(this);
+//		c.runTheGame("level-3", true, scene, stage, this);
+//		c.runClient();
 	}
+
+	@FXML
+	public void searchForServer(ActionEvent event) {
+		try {
+		client = new Client(searchForIPTextField.getText(), parseInt(searchForPortTextField.getText()));
+		changeToClientLevelSelection(event);
+		}
+		catch (Exception e) {
+			cantFindServerLabel.setText("Can't connect to this server");
+		}
+	}
+	
+	public void changeToClientLevelSelection(ActionEvent event) throws IOException {
+		System.out.println("move to search for server");
+		// serverViewUpdated = false;
+		root = FXMLLoader.load(getClass().getResource("clientLevelSelection.fxml"));
+		stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+		scene = new Scene(root);
+		stage.setScene(scene);
+		stage.show();
+	}
+	
+	public void updateClientLevelSelection() {
+		
+	}
+
+	@FXML
+	public void deleteButtonClient(ActionEvent event) {
+
+    }
+
+    @FXML
+    public void levelTypeChanged(ActionEvent event) {
+
+    }
+
+    @FXML
+    void playTheGameClient(ActionEvent event) {
+
+    }
+
 }
