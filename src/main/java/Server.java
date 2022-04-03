@@ -13,7 +13,7 @@ public class Server {
 	private ArrayList<EditorServer> editorServers = new ArrayList<>();
 
 	public Server(MenuController menu, Scene scene, Stage stage) throws IOException {
-		serverSocket = new ServerSocket(5556);
+		serverSocket = new ServerSocket(5558);
 		
 		
 		for (int i = 1; i <= 5; i++) {
@@ -28,6 +28,25 @@ public class Server {
 
 	}
 	
+	public ArrayList<String> getCreatedLevelsNames() {
+		ArrayList<String> createdLevels = new ArrayList<>();
+		createdLevels.add("test1");
+		createdLevels.add("test2");
+		createdLevels.add("test3");
+		return createdLevels;
+		
+	}
+	
+	public ArrayList<String> getDefaultLevelsNames() {
+		ArrayList<String> defaultLevelsNames = new ArrayList<>();
+		defaultLevelsNames.add("level-1");
+		defaultLevelsNames.add("level-2");
+		defaultLevelsNames.add("level-3");
+		defaultLevelsNames.add("level-4");
+		defaultLevelsNames.add("level-5");
+		return defaultLevelsNames;
+	}
+	
 	
 	
 	public int getPort() {
@@ -38,8 +57,11 @@ public class Server {
 		return editorServers;
 	}
 
-	public synchronized void addClient(Socket client) {
+	public synchronized void addClient(Socket client) throws IOException {
 		clients.add(client);
+		ServerListener sl = new ServerListener(this, client);
+		Thread slThread = new Thread(sl);
+		slThread.start();
 	}
 
 	public void closeServer() throws IOException {

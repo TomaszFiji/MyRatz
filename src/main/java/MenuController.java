@@ -173,9 +173,10 @@ public class MenuController {
 	 * Method initialize initial state of each scene.
 	 * 
 	 * @throws IOException
+	 * @throws InterruptedException 
 	 */
 	@FXML
-	private void initialize() throws IOException {
+	private void initialize() throws IOException, InterruptedException {
 		if (this.profileSelectionRoot != null) {
 			// profilesViewUpdated = false;
 			updateProfilesView();
@@ -909,11 +910,11 @@ public class MenuController {
 		}
 	}
 
-	public void updateClientLevelSelection() {
+	public void updateClientLevelSelection() throws InterruptedException {
 		if (this.client == null) {
-			System.out.println("this.client is null");
+			System.out.println("this.client is null in update");
 		} else {
-			System.out.println("this.client is not null");
+			System.out.println("this.client is not null in update");
 		}
 		clientLevelButtonsVBox.getChildren().clear();
 		ArrayList<String> levelNames = null;
@@ -996,12 +997,12 @@ public class MenuController {
 
 	}
 	@FXML
-	void clientLevelTypeChanged(ActionEvent event) {
+	void clientLevelTypeChanged(ActionEvent event) throws InterruptedException {
 		updateClientLevelSelection();
 	}
 
 	@FXML
-	void clientGamemodeTypeChanged(ActionEvent event) {
+	void clientGamemodeTypeChanged(ActionEvent event) throws InterruptedException {
 		updateClientLevelSelection();
 	}
 
