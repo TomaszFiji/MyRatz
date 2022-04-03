@@ -11,6 +11,7 @@ public class Client {
 	private boolean wiatingForCreatedData = false;
 	private boolean wiatingForDefaultData = false;
 	private ClientObjectListener clientObjectListener;
+	private int port;
 
 	public Client(String ip, int port) throws UnknownHostException, IOException {
 		System.out.println("test1");
@@ -20,7 +21,7 @@ public class Client {
 		this.clientObjectListener = new ClientObjectListener(this, server);
 		Thread clientObjectListenerThread = new Thread(clientObjectListener);
 		clientObjectListenerThread.start();
-		
+
 		System.out.println("test3");
 		defaultLevelsNames.add("level-1");
 		System.out.println(out == null);
@@ -66,6 +67,17 @@ public class Client {
 		Thread.sleep(1000);
 		System.out.println("client: asking for deflev finish" + defaultLevelsNames.get(0));
 		return defaultLevelsNames;
+	}
+
+	public synchronized void updatePort(Integer port) {
+		this.port = port;
+		notifyAll();
+	}
+
+	public synchronized int getPort(String clientSelectedLevelName) throws InterruptedException {
+		out.println("portRequest " + clientSelectedLevelName);
+		wait();
+		return port;
 	}
 
 }

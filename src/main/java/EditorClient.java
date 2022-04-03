@@ -131,8 +131,8 @@ public class EditorClient {
 		stage.show();
 	}
 
-	public void runClient() throws IOException, ClassNotFoundException, InterruptedException {
-		Socket server = new Socket(SERVER_IP, 50355);
+	public void runClient(int port) throws IOException, ClassNotFoundException, InterruptedException {
+		Socket server = new Socket(SERVER_IP, port);
 		clientListener = new EditorClientListener(this, server);
 		clientOutput = new EditorClientOutput(this, server);
 		Thread clientListenerThread = new Thread(clientListener);

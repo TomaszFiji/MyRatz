@@ -175,6 +175,10 @@ public class EditorServer {
 //			dropRates[i] = dropRates[i] / MILLIS_RATIO;
 //		}
 	}
+	
+	public String getLevelName() {
+		return levelName;
+	}
 
 
 	public void runTheGame() throws IOException {
@@ -222,6 +226,10 @@ public class EditorServer {
 		EditorServerAcceptances esa = new EditorServerAcceptances(this, editorServer);
 		Thread esaThread = new Thread(esa);
 		esaThread.start();
+	}
+	
+	public int getPort() {
+		return editorServer.getLocalPort();
 	}
 
 	public synchronized void addClient(Socket client) throws IOException {

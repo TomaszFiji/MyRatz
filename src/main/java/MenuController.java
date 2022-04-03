@@ -44,6 +44,7 @@ public class MenuController {
 	private Parent root;
 	private static String selectedLevelName = "";
 	private static String selectedEditLevelName = "";
+	private static String clientSelectedLevelName = "";
 //	private static boolean menuViewUpdated = false;
 //	private static boolean serverViewUpdated = false;
 //	private static boolean profilesViewUpdated = false;
@@ -977,7 +978,7 @@ public class MenuController {
 			levelButtons[i].setOnAction(event -> {
 				// attaching action to each button
 				selectedLevelHeadingClientLabel.setText(levelButtons[buttonIndex].getText());
-				selectedLevelName = levelButtons[buttonIndex].getText();
+				clientSelectedLevelName = levelButtons[buttonIndex].getText();
 			});
 		}
 	}
@@ -993,8 +994,14 @@ public class MenuController {
 	}
 
 	@FXML
-	void playTheGameClient(ActionEvent event) {
+	void playTheGameClient(ActionEvent event) throws IOException, ClassNotFoundException, InterruptedException {
 
+		int port = client.getPort(clientSelectedLevelName);
+		System.out.println("run client");
+		changeToMenu(event);
+		EditorClient c = new EditorClient(this);
+		c.runTheGame("level-3", true, scene, stage, this);
+		c.runClient(port);
 	}
 	@FXML
 	void clientLevelTypeChanged(ActionEvent event) throws InterruptedException {

@@ -27,6 +27,8 @@ public class ClientObjectListener implements Runnable {
 					} else if (!((LevelNamesObject) temp).getIsDefaultNames()) {
 						client.updateCreatedLevelsNames(((LevelNamesObject) temp).getLevelNames());
 					}
+				} else if (temp instanceof Integer) {
+					client.updatePort((Integer) temp);
 				}
 			}
 		} catch (IOException | ClassNotFoundException e) {
