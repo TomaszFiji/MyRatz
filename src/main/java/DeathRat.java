@@ -62,7 +62,7 @@ public class DeathRat extends Rat {
      * runs out of killing... power?
      */
     public void killRats() {
-        Tile currentTile = LevelController.getTileAt(xPos, yPos);
+        Tile currentTile = CooperationServer.getTileAt(xPos, yPos);
 
         // kill every rat on the tile unless your kill counter is
         // MAX_KILL_COUNT or greater

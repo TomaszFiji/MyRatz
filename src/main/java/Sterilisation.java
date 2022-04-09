@@ -83,16 +83,16 @@ public class Sterilisation extends Power{
         int counter = 1;
 
         while(counter < 3) {
-            tilesToSterilise.add(LevelController.getTileAt(this.xPos,
+            tilesToSterilise.add(CooperationServer.getTileAt(this.xPos,
                     this.yPos+counter));
 
-            tilesToSterilise.add(LevelController.getTileAt(this.xPos,
+            tilesToSterilise.add(CooperationServer.getTileAt(this.xPos,
                     this.yPos-counter));
 
-            tilesToSterilise.add(LevelController.getTileAt(this.xPos+counter,
+            tilesToSterilise.add(CooperationServer.getTileAt(this.xPos+counter,
                     this.yPos));
 
-            tilesToSterilise.add(LevelController.getTileAt(this.xPos-counter,
+            tilesToSterilise.add(CooperationServer.getTileAt(this.xPos-counter,
                     this.yPos));
 
             counter++;

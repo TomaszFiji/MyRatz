@@ -58,32 +58,32 @@ public class ChildRat extends LivingRat {
             // make a female rat
             AdultFemale newAdult = new AdultFemale(Rat.getDEFAULT_SPEED(),
                     direction, gasTimer, xPos, yPos, isFertile, 0, 0);
-            Objects.requireNonNull(LevelController.getTileAt(xPos, yPos)).
+            Objects.requireNonNull(CooperationServer.getTileAt(xPos, yPos)).
                     addOccupantRat(newAdult);
-            LevelController.ratAdded(newAdult);
+            CooperationServer.ratAdded(newAdult);
         }
 
         if (sex == Sex.MALE) {
             // make a male rat
             AdultMale newAdult = new AdultMale(Rat.getDEFAULT_SPEED(),
                     direction, gasTimer, xPos, yPos, isFertile);
-            Objects.requireNonNull(LevelController.getTileAt(xPos, yPos)).
+            Objects.requireNonNull(CooperationServer.getTileAt(xPos, yPos)).
                     addOccupantRat(newAdult);
-            LevelController.ratAdded(newAdult);
+            CooperationServer.ratAdded(newAdult);
         }
 
         if (sex == Sex.INTERSEX) {
             // make an intersex rat
             AdultIntersex newAdult = new AdultIntersex(Rat.getDEFAULT_SPEED(),
                     direction, gasTimer, xPos, yPos, isFertile, 0, 0);
-            Objects.requireNonNull(LevelController.getTileAt(xPos, yPos)).
+            Objects.requireNonNull(CooperationServer.getTileAt(xPos, yPos)).
                     addOccupantRat(newAdult);
-            LevelController.ratAdded(newAdult);
+            CooperationServer.ratAdded(newAdult);
         }
 
-        Objects.requireNonNull(LevelController.getTileAt(xPos, yPos)).
+        Objects.requireNonNull(CooperationServer.getTileAt(xPos, yPos)).
                 removeOccupantRat(this);
-        LevelController.ratRemoved(this);
+        CooperationServer.ratRemoved(this);
     }
 
     /**

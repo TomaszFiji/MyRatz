@@ -36,7 +36,7 @@ public class AdultMale extends LivingRat {
      */
     public void ratSexFunction() {
         if (this.isFertile) {
-            Tile currentTile = LevelController.getTileAt(xPos, yPos);
+            Tile currentTile = CooperationServer.getTileAt(xPos, yPos);
 
             assert currentTile != null;
             for (Rat currentRat : currentTile.getOccupantRats()) {

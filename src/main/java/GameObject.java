@@ -15,13 +15,14 @@ public abstract class GameObject implements Serializable {
 	// private final Image img;
 	private final String img;
 	private final boolean isPassable;
+	private Controller controller;
 
 	/**
 	 * Object constructor.
 	 *
 	 * @param isPassable can rats walk through.
 	 */
-	public GameObject(boolean isPassable) {
+	public GameObject(boolean isPassable, Controller controller) {
 		this.isPassable = isPassable;
 		img = createTexturePath();
 	}

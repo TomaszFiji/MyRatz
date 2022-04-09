@@ -13,7 +13,7 @@ public class Server {
 	private ArrayList<EditorServer> editorServers = new ArrayList<>();
 
 	public Server(MenuController menu, Scene scene, Stage stage) throws IOException {
-		serverSocket = new ServerSocket(4445);
+		serverSocket = new ServerSocket(0);
 
 		for (int i = 1; i <= 5; i++) {
 			EditorServer editorServer = new EditorServer("level-" + i, menu, scene, stage);

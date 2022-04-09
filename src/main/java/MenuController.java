@@ -168,13 +168,12 @@ public class MenuController {
 	private RadioButton sabotageClientRadioButton;
 	@FXML
 	private Label selectedLevelHeadingClientLabel;
-	
 
 	/**
 	 * Method initialize initial state of each scene.
 	 * 
 	 * @throws IOException
-	 * @throws InterruptedException 
+	 * @throws InterruptedException
 	 */
 	@FXML
 	private void initialize() throws IOException, InterruptedException {
@@ -817,17 +816,16 @@ public class MenuController {
 
 	public void runServer(ActionEvent event) throws IOException {
 		System.out.println("move to server");
-//		serverViewUpdated = false;
-		root = FXMLLoader.load(getClass().getResource("serverRunningScene.fxml"));
-		stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-		scene = new Scene(root);
-		stage.setScene(scene);
-		stage.show();
+		/*
+		 * root = FXMLLoader.load(getClass().getResource("serverRunningScene.fxml"));
+		 * stage = (Stage) ((Node) event.getSource()).getScene().getWindow(); scene =
+		 * new Scene(root); stage.setScene(scene); stage.show();
+		 */
+		
 //		System.out.println("run server");
-//		changeToMenu(event);
-//		EditorServer s = new EditorServer("level-3",this, scene, stage);
-//		s.runServer();
-//		s.runTheGame();
+		changeToMenu(event);
+		CooperationServer s = new CooperationServer("level-3",this, scene, stage);
+		s.runTheGame();
 	}
 
 	private void updateServerView() throws IOException {
@@ -885,7 +883,7 @@ public class MenuController {
 	}
 
 	public void changeToClientLevelSelection(ActionEvent event) throws IOException {
-		
+
 		System.out.println("move to search for server");
 		if (this.client == null) {
 			System.out.println("this.client is null");
@@ -940,24 +938,21 @@ public class MenuController {
 
 			deleteButtonClient.setDisable(true);
 		}
-		
+
 		if (cooperationClientRadioButton.isSelected()) {
 
-			selectRadioButton(cooperationClientRadioButton, sabotageClientRadioButton,
-					mapCreationClientRadioButton);
+			selectRadioButton(cooperationClientRadioButton, sabotageClientRadioButton, mapCreationClientRadioButton);
 
 			deleteButtonClient.setDisable(true);
 
 		} else if (sabotageClientRadioButton.isSelected()) {
 
-			selectRadioButton(sabotageClientRadioButton, cooperationClientRadioButton,
-					mapCreationClientRadioButton);
+			selectRadioButton(sabotageClientRadioButton, cooperationClientRadioButton, mapCreationClientRadioButton);
 
 			deleteButtonClient.setDisable(true);
 		} else if (mapCreationClientRadioButton.isSelected()) {
 
-			selectRadioButton(mapCreationClientRadioButton, cooperationClientRadioButton,
-					sabotageClientRadioButton);
+			selectRadioButton(mapCreationClientRadioButton, cooperationClientRadioButton, sabotageClientRadioButton);
 
 			deleteButtonClient.setDisable(true);
 		}
@@ -997,12 +992,13 @@ public class MenuController {
 	void playTheGameClient(ActionEvent event) throws IOException, ClassNotFoundException, InterruptedException {
 
 		int port = client.getPort(clientSelectedLevelName);
-		System.out.println("run client");
-		changeToMenu(event);
+		System.out.println("run client " + port);
+		// changeToMenu(event);
 		EditorClient c = new EditorClient(this);
 		c.runTheGame("level-3", true, scene, stage, this);
 		c.runClient(port);
 	}
+
 	@FXML
 	void clientLevelTypeChanged(ActionEvent event) throws InterruptedException {
 		updateClientLevelSelection();

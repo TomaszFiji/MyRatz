@@ -45,8 +45,8 @@ public class MaleSwapper extends Power {
                 currentTile.addOccupantRat(copyRat);
                 currentTile.removeOccupantRat(r);
 
-                LevelController.ratAdded(copyRat);
-                LevelController.ratRemoved(r);
+                CooperationServer.ratAdded(copyRat);
+                CooperationServer.ratRemoved(r);
             } else {
                 currentTile.removeActivePower(this);
             }

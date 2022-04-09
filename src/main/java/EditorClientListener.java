@@ -39,7 +39,8 @@ public class EditorClientListener implements Runnable {
 //						+ tileMap);
 			}
 		} catch (IOException | ClassNotFoundException e) {
-			e.printStackTrace();
+			//e.printStackTrace();
+			System.err.println(e);
 		}
 
 	}

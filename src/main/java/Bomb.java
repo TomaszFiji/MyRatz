@@ -69,10 +69,10 @@ public class Bomb extends Power {
         int counter = 1;
 
         // North
-        if (LevelController.getTileAt(this.xPos, this.yPos + counter) != null) {
-            while (Objects.requireNonNull(LevelController.getTileAt(this.xPos,
+        if (CooperationServer.getTileAt(this.xPos, this.yPos + counter) != null) {
+            while (Objects.requireNonNull(CooperationServer.getTileAt(this.xPos,
                     this.yPos + counter)).isPassable()) {
-                tilesToExplode.add(LevelController.getTileAt(this.xPos,
+                tilesToExplode.add(CooperationServer.getTileAt(this.xPos,
                         this.yPos + counter));
                 counter++;
             }
@@ -80,10 +80,10 @@ public class Bomb extends Power {
 
         // South
         counter = 1;
-        if (LevelController.getTileAt(this.xPos, this.yPos - counter) != null) {
-            while (Objects.requireNonNull(LevelController.getTileAt(this.xPos,
+        if (CooperationServer.getTileAt(this.xPos, this.yPos - counter) != null) {
+            while (Objects.requireNonNull(CooperationServer.getTileAt(this.xPos,
                     this.yPos - counter)).isPassable()) {
-                tilesToExplode.add(LevelController.getTileAt(this.xPos,
+                tilesToExplode.add(CooperationServer.getTileAt(this.xPos,
                         this.yPos - counter));
                 counter++;
             }
@@ -91,10 +91,10 @@ public class Bomb extends Power {
 
         // East
         counter = 1;
-        if (LevelController.getTileAt(this.xPos + counter, this.yPos) != null) {
-            while (Objects.requireNonNull(LevelController.getTileAt(this.xPos +
+        if (CooperationServer.getTileAt(this.xPos + counter, this.yPos) != null) {
+            while (Objects.requireNonNull(CooperationServer.getTileAt(this.xPos +
                     counter, this.yPos)).isPassable()) {
-                tilesToExplode.add(LevelController.getTileAt(this.xPos +
+                tilesToExplode.add(CooperationServer.getTileAt(this.xPos +
                                 counter, this.yPos));
                 counter++;
             }
@@ -102,10 +102,10 @@ public class Bomb extends Power {
 
         // West
         counter = 1;
-        if (LevelController.getTileAt(this.xPos - counter, this.yPos) != null) {
-            while(Objects.requireNonNull(LevelController.getTileAt(this.xPos -
+        if (CooperationServer.getTileAt(this.xPos - counter, this.yPos) != null) {
+            while(Objects.requireNonNull(CooperationServer.getTileAt(this.xPos -
                     counter, this.yPos)).isPassable()) {
-                tilesToExplode.add(LevelController.getTileAt(this.xPos-counter,
+                tilesToExplode.add(CooperationServer.getTileAt(this.xPos-counter,
                         this.yPos));
                 counter++;
             }

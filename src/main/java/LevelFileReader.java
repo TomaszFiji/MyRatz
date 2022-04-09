@@ -139,8 +139,8 @@ public class LevelFileReader {
 
         StringBuilder inventory = new StringBuilder();
 
-        for (int i = 0; i < LevelController.getCounters().length; i++) {
-            inventory.append(LevelController.getCounters()[i]).append(",");
+        for (int i = 0; i < CooperationServer.getCounters().length; i++) {
+            inventory.append(CooperationServer.getCounters()[i]).append(",");
         }
 
         StringBuilder allObjects = new StringBuilder();
@@ -148,8 +148,8 @@ public class LevelFileReader {
         // add rats to file
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                if (Objects.requireNonNull(LevelController.getTileAt(x, y)).getOccupantRats().size() > 0) {
-                    for (Rat rat : Objects.requireNonNull(LevelController.getTileAt(x, y)).getOccupantRats()) {
+                if (Objects.requireNonNull(CooperationServer.getTileAt(x, y)).getOccupantRats().size() > 0) {
+                    for (Rat rat : Objects.requireNonNull(CooperationServer.getTileAt(x, y)).getOccupantRats()) {
                         allObjects.append("(").append(ratToStr(rat)).append(")\n");
                     }
                 }
@@ -159,15 +159,15 @@ public class LevelFileReader {
         // add powers to file
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                if (Objects.requireNonNull(LevelController.getTileAt(x, y)).getActivePowers().size() > 0) {
-                    for (Power power : Objects.requireNonNull(LevelController.getTileAt(x, y)).getActivePowers()) {
+                if (Objects.requireNonNull(CooperationServer.getTileAt(x, y)).getActivePowers().size() > 0) {
+                    for (Power power : Objects.requireNonNull(CooperationServer.getTileAt(x, y)).getActivePowers()) {
                         allObjects.append("(").append(powerToStr(power)).append(")\n");
                     }
                 }
             }
         }
 
-        int timeInSeconds = (int) Math.floor(LevelController.getCurrentTimeLeft() / milli);
+        int timeInSeconds = (int) Math.floor(CooperationServer.getCurrentTimeLeft() / milli);
 
         String fileString = String.format("%s\n%d\n%s\n%s\n", levelPath, timeInSeconds, inventory, allObjects);
         writer.write(fileString);
@@ -444,7 +444,7 @@ public class LevelFileReader {
             String[] inProgInvString = reader.nextLine().split(",");
             for (int i = 0; i < inProgInvString.length; i++) {
                 inProgInv[i] = Integer.parseInt(inProgInvString[i]);
-                LevelController.addPowersFromSave(inProgInv);
+                CooperationServer.addPowersFromSave(inProgInv);
             }
             readObjects(reader, false);
         }

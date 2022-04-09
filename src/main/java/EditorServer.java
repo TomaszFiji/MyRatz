@@ -248,7 +248,7 @@ public class EditorServer {
 		clientInputThread.start();
 		
 		counterOfClients++;
-		if(counterOfClients == 2) {
+		if(counterOfClients == 1) {
 			runTheGame();
 		}
 	}
