@@ -850,16 +850,16 @@ public class MenuController {
 	public void runClient(ActionEvent event) throws IOException, ClassNotFoundException, InterruptedException {
 		System.out.println("move to search for server");
 		// serverViewUpdated = false;
-		root = FXMLLoader.load(getClass().getResource("clientSearchingForServer.fxml"));
-		stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-		scene = new Scene(root);
-		stage.setScene(scene);
-		stage.show();
-//		System.out.println("run client");
-//		changeToMenu(event);
-//		EditorClient c = new EditorClient(this);
-//		c.runTheGame("level-3", true, scene, stage, this);
-//		c.runClient();
+//		root = FXMLLoader.load(getClass().getResource("clientSearchingForServer.fxml"));
+//		stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+//		scene = new Scene(root);
+//		stage.setScene(scene);
+//		stage.show();
+		System.out.println("run client");
+		changeToMenu(event);
+		CooperationClient c = new CooperationClient("level-3", this, scene, stage);
+		c.runTheGame("level-3", true, scene, stage, this);
+		//c.runClient();
 	}
 
 	@FXML
