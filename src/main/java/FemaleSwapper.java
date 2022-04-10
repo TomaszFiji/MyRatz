@@ -18,8 +18,8 @@ public class FemaleSwapper extends Power {
      * @param xPos x coordinate
      * @param yPos y coordinate
      */
-    FemaleSwapper(int xPos, int yPos) {
-        super(true, xPos, yPos);
+    FemaleSwapper(Controller controller, int xPos, int yPos) {
+        super(controller, true, xPos, yPos);
     }
 
 
@@ -38,16 +38,14 @@ public class FemaleSwapper extends Power {
         // Loop through the rats and attempt to change its gender
         for (Rat r : rats) {
             if (r instanceof AdultMale) {
-                AdultFemale copyRat = new AdultFemale(r.getSpeed(),
-                        r.getDirection(), r.getGasTimer(), this.xPos,
-                        this.yPos, ((AdultMale) r).isFertile, 0, 0);
+                AdultFemale copyRat = new AdultFemale(this.getController(), r.getSpeed(),  r.getDirection(), r.getGasTimer(), this.xPos, this.yPos, ((AdultMale) r).isFertile, 0, 0);
 
                 currentTile.removeActivePower(this);
                 currentTile.addOccupantRat(copyRat);
                 currentTile.removeOccupantRat(r);
 
-                CooperationServer.ratAdded(copyRat);
-                CooperationServer.ratRemoved(r);
+                this.getController().ratAdded(copyRat);
+                this.getController().ratRemoved(r);
             } else {
                 currentTile.removeActivePower(this);
             }

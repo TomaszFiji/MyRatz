@@ -25,9 +25,9 @@ public class DeathRat extends Rat {
      * @param yPos        where the rat is on the y-axis.
      * @param killCounter how many times the death rat has killed another rat
      */
-    public DeathRat(int speed, Direction direction, int gasTimer, int xPos,
+    public DeathRat(Controller controller, int speed, Direction direction, int gasTimer, int xPos,
                     int yPos, int killCounter) {
-        super(speed, direction, gasTimer, xPos, yPos);
+        super(controller, speed, direction, gasTimer, xPos, yPos);
         this.killCounter = killCounter;
         this.ominousWaiting = INITIAL_OMINOUS_WAITING;
     }
@@ -62,7 +62,7 @@ public class DeathRat extends Rat {
      * runs out of killing... power?
      */
     public void killRats() {
-        Tile currentTile = CooperationServer.getTileAt(xPos, yPos);
+        Tile currentTile = this.getController().getTileAt(xPos, yPos);
 
         // kill every rat on the tile unless your kill counter is
         // MAX_KILL_COUNT or greater

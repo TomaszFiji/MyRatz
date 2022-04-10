@@ -19,8 +19,8 @@ public class Poison extends Power {
      * @param yPos y coordinate
      */
 
-    Poison(int xPos, int yPos) {
-        super(true, xPos, yPos);
+    Poison(Controller controller, int xPos, int yPos) {
+        super(controller, true, xPos, yPos);
     }
 
     /** Kills rats standing on this Power Tile.

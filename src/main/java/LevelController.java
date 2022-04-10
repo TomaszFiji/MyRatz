@@ -35,11 +35,11 @@ import javax.imageio.ImageIO;
  * @version 1.0
  */
 
-public class LevelController {
+public class LevelController implements Controller {
 
 	private static final int ITEM_NUM = 8;
 	private static final int TILE_SIZE = 64;
-	private static final int[] counters = new int[ITEM_NUM];
+	private final int[] counters = new int[ITEM_NUM];
 
 	private static final String defaultLevelRegex = "level-[1-5]";
 
@@ -52,23 +52,24 @@ public class LevelController {
 	// Game map
 	private static Tile[][] tileMap = new Tile[0][0];
 
-	private static int score;
-	private static int currentTimeLeft;
+	private int score;
+	private int currentTimeLeft;
 
 	// Rat counters
-	private static int femaleRatCounter;
-	private static int maleRatCounter;
-	private static int otherRatCounter;
+	private int femaleRatCounter;
+	private int maleRatCounter;
+	private int otherRatCounter;
 
 	// For loading inventory from save
 	private static int[] savedPowers;
 	private Boolean powersImportedFromSave = true;
 
 	// Images for different game items
-	private final List<Image> itemImages = Arrays.asList((new Bomb(0, 0)).getImg(), (new Gas(0, 0, true)).getImg(),
-			(new Sterilisation(0, 0)).getImg(), (new Poison(0, 0)).getImg(), (new MaleSwapper(0, 0)).getImg(),
-			(new FemaleSwapper(0, 0)).getImg(), (new StopSign(0, 0)).getImg(),
-			(new DeathRat(0, Rat.Direction.WEST, 0, 0, 0, 0)).getImg());
+	private final List<Image> itemImages = Arrays.asList((new Bomb(this, 0, 0)).getImg(),
+			(new Gas(this, 0, 0, true)).getImg(), (new Sterilisation(this, 0, 0)).getImg(),
+			(new Poison(this, 0, 0)).getImg(), (new MaleSwapper(this, 0, 0)).getImg(),
+			(new FemaleSwapper(this, 0, 0)).getImg(), (new StopSign(this, 0, 0)).getImg(),
+			(new DeathRat(this, 0, Rat.Direction.WEST, 0, 0, 0, 0)).getImg());
 
 	// Size of game map
 	private final int WIDTH;
@@ -132,6 +133,7 @@ public class LevelController {
 	public LevelController(String selectedLevelName, MenuController mainMenuController) {
 		LEVEL_NAME = selectedLevelName;
 		MAIN_MENU = mainMenuController;
+		LevelFileReader.setControlller(this);
 		WIDTH = LevelFileReader.getWidth();
 		HEIGHT = LevelFileReader.getHeight();
 
@@ -151,7 +153,7 @@ public class LevelController {
 	 *
 	 * @return Time in milliseconds.
 	 */
-	public static int getCurrentTimeLeft() {
+	public int getCurrentTimeLeft() {
 		return currentTimeLeft;
 	}
 
@@ -160,7 +162,7 @@ public class LevelController {
 	 *
 	 * @return number of each item.
 	 */
-	public static int[] getCounters() {
+	public int[] getCounters() {
 		return counters;
 	}
 
@@ -232,7 +234,7 @@ public class LevelController {
 	 * @param y Vertical position.
 	 * @return Tile at position.
 	 */
-	public static Tile getTileAt(int x, int y) {
+	public Tile getTileAt(int x, int y) {
 		try {
 			return tileMap[x][y];
 		} catch (Exception ArrayIndexOutOfBoundsException) {
@@ -303,7 +305,7 @@ public class LevelController {
 	 * 
 	 * @param powers power data.
 	 */
-	public static void addPowersFromSave(int[] powers) {
+	public void addPowersFromSave(int[] powers) {
 		savedPowers = powers;
 	}
 
@@ -436,25 +438,25 @@ public class LevelController {
 		boolean addPower = true;
 		switch (index) {
 		case 0:
-			power = new Bomb(x, y);
+			power = new Bomb(this, x, y);
 			break;
 		case 1:
-			power = new Gas(x, y, true);
+			power = new Gas(this, x, y, true);
 			break;
 		case 2:
-			power = new Sterilisation(x, y);
+			power = new Sterilisation(this, x, y);
 			break;
 		case 3:
-			power = new Poison(x, y);
+			power = new Poison(this, x, y);
 			break;
 		case 4:
-			power = new MaleSwapper(x, y);
+			power = new MaleSwapper(this, x, y);
 			break;
 		case 5:
-			power = new FemaleSwapper(x, y);
+			power = new FemaleSwapper(this, x, y);
 			break;
 		case 6:
-			power = new StopSign(x, y);
+			power = new StopSign(this, x, y);
 			break;
 		case 7:
 			SeaShantySimulator seaSim = new SeaShantySimulator();
@@ -467,7 +469,7 @@ public class LevelController {
 				seaSim.playAudioClip(DEATH_RAT_SOUND_3_PATH, SOUND_VOLUME_RAT);
 			}
 
-			tileMap[x][y].addOccupantRat(new DeathRat(Rat.getDEFAULT_SPEED(), Rat.Direction.NORTH, 0, x, y, 0));
+			tileMap[x][y].addOccupantRat(new DeathRat(this, Rat.getDEFAULT_SPEED(), Rat.Direction.NORTH, 0, x, y, 0));
 			addPower = false;
 			break;
 		default:
@@ -501,7 +503,7 @@ public class LevelController {
 
 		if (canBeSaved) {
 			try {
-				LevelFileReader.saveLevel(newLevelName);
+				LevelFileReader.saveLevel(this, newLevelName);
 				makeScreenShot(newLevelName);
 				System.out.println("Screenshot was saved");
 			} catch (IOException e) {
@@ -563,6 +565,7 @@ public class LevelController {
 
 	/**
 	 * Renders toolbar of one specific item type.
+	 * 
 	 * @param index the number representing an item in the toolbar
 	 */
 	private void renderItem(int index) {
@@ -599,7 +602,7 @@ public class LevelController {
 	 * @param item      item that is being made draggable.
 	 * @param dbContent String used in setupCanvasDragBehaviour.
 	 */
-	private static void makeDraggable(final ImageView item, int dbContent) {
+	private void makeDraggable(final ImageView item, int dbContent) {
 		item.setOnDragDetected(event -> {
 			Dragboard dragboard = item.startDragAndDrop(TransferMode.MOVE);
 			ClipboardContent clipboardContent = new ClipboardContent();
@@ -614,7 +617,7 @@ public class LevelController {
 	 *
 	 * @param rat the rat being removed.
 	 */
-	public static void ratRemoved(Rat rat) {
+	public void ratRemoved(Rat rat) {
 		if (rat instanceof AdultMale) {
 			maleRatCounter--;
 		} else if (rat instanceof AdultFemale) {
@@ -629,7 +632,7 @@ public class LevelController {
 	 *
 	 * @param rat the rat being added.
 	 */
-	public static void ratAdded(Rat rat) {
+	public void ratAdded(Rat rat) {
 		if (rat instanceof ChildRat || rat instanceof AdultIntersex) {
 			otherRatCounter++;
 		} else if (rat instanceof AdultMale) {
@@ -644,7 +647,7 @@ public class LevelController {
 	 *
 	 * @param rat rat that has been killed.
 	 */
-	public static void ratKilled(Rat rat) {
+	public void ratKilled(Rat rat) {
 		if (rat instanceof AdultFemale) {
 			if (((AdultFemale) rat).getRatFetusCount() > 0) {
 				for (int i = 0; i < ((AdultFemale) rat).getRatFetusCount(); i++) {

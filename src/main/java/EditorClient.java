@@ -37,7 +37,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
-public class EditorClient {
+public class EditorClient implements Controller {
 	private static final String SERVER_IP = "127.0.0.1";
 	private static final int SERVER_PORT = Menu.SERVER_PORT;
 	private EditorClientListener clientListener;
@@ -116,10 +116,10 @@ public class EditorClient {
 		FXMLLoader loader = new FXMLLoader(getClass().getResource("editorClient.fxml"));
 
 		if (isDefaultLevel) {
-			LevelFileReader.loadNormalLevelFile("src/main/resources/levels/default_levels/" + selectedEditLevelName,
+			LevelFileReader.loadNormalLevelFile(this, "src/main/resources/levels/default_levels/" + selectedEditLevelName,
 					true);
 		} else {
-			LevelFileReader.loadNormalLevelFile("src/main/resources/levels/created_levels/" + selectedEditLevelName,
+			LevelFileReader.loadNormalLevelFile(this, "src/main/resources/levels/created_levels/" + selectedEditLevelName,
 					true);
 		}
 
@@ -274,9 +274,9 @@ public class EditorClient {
 	 * Sets up ability to drag rat spawns onto tilemap.
 	 */
 	private void setupDraggableSpawns() {
-		AdultMale adultMale = new AdultMale(1, Rat.Direction.NORTH, 0, 0, 0, false);
-		AdultFemale adultFemale = new AdultFemale(1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0);
-		AdultIntersex adultIntersex = new AdultIntersex(1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0);
+		AdultMale adultMale = new AdultMale(this, 1, Rat.Direction.NORTH, 0, 0, 0, false);
+		AdultFemale adultFemale = new AdultFemale(this, 1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0);
+		AdultIntersex adultIntersex = new AdultIntersex(this, 1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0);
 
 		ImageView adultMaleImageView = new ImageView(adultMale.getImg());
 		ImageView adultFemaleImageView = new ImageView(adultFemale.getImg());
@@ -697,13 +697,13 @@ public class EditorClient {
 					ChildRat rat = (ChildRat) tileMap[i][j].getOccupantRats().get(0);
 					if (rat.getRatSex() == Rat.Sex.MALE) {
 						tileMap[i][j].removeOccupantRat(rat);
-						tileMap[i][j].addOccupantRat(new AdultMale(6, Rat.Direction.NORTH, 0, i, j, true));
+						tileMap[i][j].addOccupantRat(new AdultMale(this, 6, Rat.Direction.NORTH, 0, i, j, true));
 					} else if (rat.getRatSex() == Rat.Sex.FEMALE) {
 						tileMap[i][j].removeOccupantRat(rat);
-						tileMap[i][j].addOccupantRat(new AdultFemale(6, Rat.Direction.NORTH, 0, i, j, true, 0, 0));
+						tileMap[i][j].addOccupantRat(new AdultFemale(this, 6, Rat.Direction.NORTH, 0, i, j, true, 0, 0));
 					} else if (rat.getRatSex() == Rat.Sex.INTERSEX) {
 						tileMap[i][j].removeOccupantRat(rat);
-						tileMap[i][j].addOccupantRat(new AdultIntersex(6, Rat.Direction.NORTH, 0, i, j, true, 0, 0));
+						tileMap[i][j].addOccupantRat(new AdultIntersex(this, 6, Rat.Direction.NORTH, 0, i, j, true, 0, 0));
 					}
 				}
 			}
@@ -721,15 +721,15 @@ public class EditorClient {
 					if (rat instanceof AdultMale) {
 						tileMap[i][j].removeOccupantRat(rat);
 						tileMap[i][j]
-								.addOccupantRat(new ChildRat(4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.MALE));
+								.addOccupantRat(new ChildRat(this, 4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.MALE));
 					} else if (rat instanceof AdultFemale) {
 						tileMap[i][j].removeOccupantRat(rat);
 						tileMap[i][j]
-								.addOccupantRat(new ChildRat(4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.FEMALE));
+								.addOccupantRat(new ChildRat(this, 4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.FEMALE));
 					} else if (rat instanceof AdultIntersex) {
 						tileMap[i][j].removeOccupantRat(rat);
 						tileMap[i][j].addOccupantRat(
-								new ChildRat(4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.INTERSEX));
+								new ChildRat(this, 4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.INTERSEX));
 					}
 				}
 			}
@@ -794,5 +794,47 @@ public class EditorClient {
 			// TODO: handle this exception
 		}
 
+	}
+
+	@Override
+	public Tile getTileAt(int x, int y) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void ratKilled(Rat rat) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void ratAdded(Rat rat) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void ratRemoved(Rat rat) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public int[] getCounters() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public int getCurrentTimeLeft() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public void addPowersFromSave(int[] inProgInv) {
+		// TODO Auto-generated method stub
+		
 	}
 }

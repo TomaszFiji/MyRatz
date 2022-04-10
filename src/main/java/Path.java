@@ -13,7 +13,7 @@ public class Path extends Tile {
      * Constructs a new path
      */
     public Path() {
-        super(true, new ArrayList<>(), new ArrayList<>());
+        super(null, true, new ArrayList<>(), new ArrayList<>());
     }
 
     /**
@@ -52,7 +52,7 @@ public class Path extends Tile {
 
         // Gas is always drawn on top
         if (drawGas) {
-            (new Gas(x, y, true)).draw(x,y,g);
+            (new Gas(null, x, y, true)).draw(x,y,g);
         }
 
     }

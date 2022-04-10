@@ -12,6 +12,6 @@ public class GrassB extends Tile {
      * Cannot be interacted with or passed.
      */
     public GrassB() {
-        super(false, new ArrayList<>(), new ArrayList<>());
+        super(null, false, new ArrayList<>(), new ArrayList<>());
     }
 }

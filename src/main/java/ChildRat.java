@@ -24,9 +24,9 @@ public class ChildRat extends LivingRat {
      * @param age       how old the rat is
      * @param sex       whether the rat is female, male, or intersex.
      */
-    ChildRat(int speed, Direction direction, int gasTimer, int xPos,
+    ChildRat(Controller controller, int speed, Direction direction, int gasTimer, int xPos,
              int yPos, boolean isFertile, int age, Sex sex) {
-        super(speed, direction, gasTimer, xPos, yPos, isFertile);
+        super(controller, speed, direction, gasTimer, xPos, yPos, isFertile);
         this.age = age;
         this.sex = sex;
     }
@@ -56,34 +56,34 @@ public class ChildRat extends LivingRat {
     public void growUp() {
         if (sex == Sex.FEMALE) {
             // make a female rat
-            AdultFemale newAdult = new AdultFemale(Rat.getDEFAULT_SPEED(),
+            AdultFemale newAdult = new AdultFemale(this.getController(), Rat.getDEFAULT_SPEED(),
                     direction, gasTimer, xPos, yPos, isFertile, 0, 0);
-            Objects.requireNonNull(CooperationServer.getTileAt(xPos, yPos)).
+            Objects.requireNonNull(this.getController().getTileAt(xPos, yPos)).
                     addOccupantRat(newAdult);
-            CooperationServer.ratAdded(newAdult);
+            this.getController().ratAdded(newAdult);
         }
 
         if (sex == Sex.MALE) {
             // make a male rat
-            AdultMale newAdult = new AdultMale(Rat.getDEFAULT_SPEED(),
+            AdultMale newAdult = new AdultMale(this.getController(), Rat.getDEFAULT_SPEED(),
                     direction, gasTimer, xPos, yPos, isFertile);
-            Objects.requireNonNull(CooperationServer.getTileAt(xPos, yPos)).
+            Objects.requireNonNull(this.getController().getTileAt(xPos, yPos)).
                     addOccupantRat(newAdult);
-            CooperationServer.ratAdded(newAdult);
+            this.getController().ratAdded(newAdult);
         }
 
         if (sex == Sex.INTERSEX) {
             // make an intersex rat
-            AdultIntersex newAdult = new AdultIntersex(Rat.getDEFAULT_SPEED(),
+            AdultIntersex newAdult = new AdultIntersex(this.getController(), Rat.getDEFAULT_SPEED(),
                     direction, gasTimer, xPos, yPos, isFertile, 0, 0);
-            Objects.requireNonNull(CooperationServer.getTileAt(xPos, yPos)).
+            Objects.requireNonNull(this.getController().getTileAt(xPos, yPos)).
                     addOccupantRat(newAdult);
-            CooperationServer.ratAdded(newAdult);
+            this.getController().ratAdded(newAdult);
         }
 
-        Objects.requireNonNull(CooperationServer.getTileAt(xPos, yPos)).
+        Objects.requireNonNull(this.getController().getTileAt(xPos, yPos)).
                 removeOccupantRat(this);
-        CooperationServer.ratRemoved(this);
+        this.getController().ratRemoved(this);
     }
 
     /**

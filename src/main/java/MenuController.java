@@ -628,18 +628,18 @@ public class MenuController {
 
 		if (defaultLevelsRadioButton.isSelected()) {
 			levelType = "default_levels/";
-			LevelFileReader.loadNormalLevelFile("src/main/resources/levels/" + levelType + selectedLevelName, true);
+			LevelFileReader.loadNormalLevelFile(null, "src/main/resources/levels/" + levelType + selectedLevelName, true);
 		} else if (createdLevelsRadioButton.isSelected()) {
 			levelType = "created_levels/";
-			LevelFileReader.loadNormalLevelFile("src/main/resources/levels/" + levelType + selectedLevelName, true);
+			LevelFileReader.loadNormalLevelFile(null, "src/main/resources/levels/" + levelType + selectedLevelName, true);
 		} else if (savedGamesRadioButton.isSelected()) {
 			levelType = "saved_games/" + ProfileFileReader.getLoggedProfile() + "/";
-			LevelFileReader.loadSavedLevelFile("src/main/resources/levels/" + levelType + selectedLevelName);
+			LevelFileReader.loadSavedLevelFile(null, "src/main/resources/levels/" + levelType + selectedLevelName);
 		}
-
-		FXMLLoader loader = new FXMLLoader(getClass().getResource("level.fxml"));
 		LevelController levelController = new LevelController(selectedLevelName, this);
 
+		FXMLLoader loader = new FXMLLoader(getClass().getResource("level.fxml"));
+		levelController.ratRemoved(null);
 		loader.setController(levelController);
 		Pane root = loader.load();
 
@@ -732,14 +732,14 @@ public class MenuController {
 		FXMLLoader loader = new FXMLLoader(getClass().getResource("editor.fxml"));
 
 		if (editDefaultLevelsRadioButton.isSelected()) {
-			LevelFileReader.loadNormalLevelFile("src/main/resources/levels/default_levels/" + selectedEditLevelName,
+			LevelFileReader.loadNormalLevelFile(null, "src/main/resources/levels/default_levels/" + selectedEditLevelName,
 					true);
 		} else if (editCustomLevelsRadioButton.isSelected()) {
-			LevelFileReader.loadNormalLevelFile("src/main/resources/levels/created_levels/" + selectedEditLevelName,
+			LevelFileReader.loadNormalLevelFile(null, "src/main/resources/levels/created_levels/" + selectedEditLevelName,
 					true);
 		}
-
 		EditorController editorController = new EditorController(selectedEditLevelName, this);
+
 		loader.setController(editorController);
 		Pane root = loader.load();
 
@@ -816,16 +816,17 @@ public class MenuController {
 
 	public void runServer(ActionEvent event) throws IOException {
 		System.out.println("move to server");
-		/*
-		 * root = FXMLLoader.load(getClass().getResource("serverRunningScene.fxml"));
-		 * stage = (Stage) ((Node) event.getSource()).getScene().getWindow(); scene =
-		 * new Scene(root); stage.setScene(scene); stage.show();
-		 */
-		
+
+		root = FXMLLoader.load(getClass().getResource("serverRunningScene.fxml"));
+		stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+		scene = new Scene(root);
+		stage.setScene(scene);
+		stage.show();
+
 //		System.out.println("run server");
-		changeToMenu(event);
-		CooperationServer s = new CooperationServer("level-3",this, scene, stage);
-		s.runTheGame();
+//		changeToMenu(event);
+//		CooperationServer s = new CooperationServer("level-3",this, scene, stage);
+//		s.runTheGame();
 	}
 
 	private void updateServerView() throws IOException {

@@ -11,6 +11,6 @@ public class Tunnel extends Tile {
      * Doesn't really do anything that the Tile doesn't do.
      */
     public Tunnel() {
-        super(true, new ArrayList<>(), new ArrayList<>());
+        super(null, true, new ArrayList<>(), new ArrayList<>());
     }
 }

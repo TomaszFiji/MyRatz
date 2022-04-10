@@ -47,8 +47,8 @@ public abstract class Rat extends GameObject {
      * @param xPos      where the rat is on the x-axis.
      * @param yPos      where the rat is on the y-axis.
      */
-    Rat(int speed, Direction direction, int gasTimer, int xPos, int yPos) {
-        super(true);
+    Rat(Controller controller, int speed, Direction direction, int gasTimer, int xPos, int yPos) {
+        super(true, controller);
         this.speed = speed;
         this.direction = direction;
         this.gasTimer = gasTimer;
@@ -157,14 +157,14 @@ public abstract class Rat extends GameObject {
             if (!(this instanceof DeathRat)) {
                 // add the rat to the next tile and remove it from the current one
                 getForwardTile().addOccupantRat(this);
-                Objects.requireNonNull(CooperationServer.getTileAt(xPos, yPos)).removeOccupantRat(this);
+                Objects.requireNonNull(this.getController().getTileAt(xPos, yPos)).removeOccupantRat(this);
 
             } else {
                 if (((DeathRat) this).getOminousWaiting() == 0) {
                     // death rats can only move if their wait time is up
                     // add the rat to the next tile and remove it from the current one
                     getForwardTile().addOccupantRat(this);
-                    Objects.requireNonNull(CooperationServer.getTileAt(xPos, yPos)).removeOccupantRat(this);
+                    Objects.requireNonNull(this.getController().getTileAt(xPos, yPos)).removeOccupantRat(this);
 
                 } else {
                     move = false;
@@ -299,16 +299,16 @@ public abstract class Rat extends GameObject {
         Tile forwardTile;
         switch (direction) {
             case NORTH:
-                forwardTile = CooperationServer.getTileAt(xPos, yPos - 1);
+                forwardTile = this.getController().getTileAt(xPos, yPos - 1);
                 break;
             case EAST:
-                forwardTile = CooperationServer.getTileAt(xPos + 1, yPos);
+                forwardTile = this.getController().getTileAt(xPos + 1, yPos);
                 break;
             case SOUTH:
-                forwardTile = CooperationServer.getTileAt(xPos, yPos + 1);
+                forwardTile = this.getController().getTileAt(xPos, yPos + 1);
                 break;
             default:
-                forwardTile = CooperationServer.getTileAt(xPos - 1, yPos);
+                forwardTile = this.getController().getTileAt(xPos - 1, yPos);
                 break;
 
         }
@@ -324,16 +324,16 @@ public abstract class Rat extends GameObject {
         Tile leftTile;
         switch (direction) {
             case NORTH:
-                leftTile = CooperationServer.getTileAt(xPos - 1, yPos);
+                leftTile = this.getController().getTileAt(xPos - 1, yPos);
                 break;
             case EAST:
-                leftTile = CooperationServer.getTileAt(xPos, yPos - 1);
+                leftTile = this.getController().getTileAt(xPos, yPos - 1);
                 break;
             case SOUTH:
-                leftTile = CooperationServer.getTileAt(xPos + 1, yPos);
+                leftTile = this.getController().getTileAt(xPos + 1, yPos);
                 break;
             default:
-                leftTile = CooperationServer.getTileAt(xPos, yPos + 1);
+                leftTile = this.getController().getTileAt(xPos, yPos + 1);
                 break;
         }
         return leftTile;
@@ -348,16 +348,16 @@ public abstract class Rat extends GameObject {
         Tile rightTile;
         switch (direction) {
             case NORTH:
-                rightTile = CooperationServer.getTileAt(xPos + 1, yPos);
+                rightTile = this.getController().getTileAt(xPos + 1, yPos);
                 break;
             case EAST:
-                rightTile = CooperationServer.getTileAt(xPos, yPos + 1);
+                rightTile = this.getController().getTileAt(xPos, yPos + 1);
                 break;
             case SOUTH:
-                rightTile = CooperationServer.getTileAt(xPos - 1, yPos);
+                rightTile = this.getController().getTileAt(xPos - 1, yPos);
                 break;
             default:
-                rightTile = CooperationServer.getTileAt(xPos, yPos - 1);
+                rightTile = this.getController().getTileAt(xPos, yPos - 1);
                 break;
 
         }
@@ -373,16 +373,16 @@ public abstract class Rat extends GameObject {
         Tile rearTile;
         switch (direction) {
             case NORTH:
-                rearTile = CooperationServer.getTileAt(xPos, yPos + 1);
+                rearTile = this.getController().getTileAt(xPos, yPos + 1);
                 break;
             case EAST:
-                rearTile = CooperationServer.getTileAt(xPos - 1, yPos);
+                rearTile = this.getController().getTileAt(xPos - 1, yPos);
                 break;
             case SOUTH:
-                rearTile = CooperationServer.getTileAt(xPos, yPos - 1);
+                rearTile = this.getController().getTileAt(xPos, yPos - 1);
                 break;
             default:
-                rearTile = CooperationServer.getTileAt(xPos + 1, yPos);
+                rearTile = this.getController().getTileAt(xPos + 1, yPos);
                 break;
 
         }
@@ -407,9 +407,9 @@ public abstract class Rat extends GameObject {
      * Causes the rat to die.
      */
     public void die() {
-        CooperationServer.ratKilled(this);
-        if (CooperationServer.getTileAt(xPos, yPos) != null) {
-            Objects.requireNonNull(CooperationServer.getTileAt(xPos, yPos)).removeOccupantRat(this);
+    	this.getController().ratKilled(this);
+        if (this.getController().getTileAt(xPos, yPos) != null) {
+            Objects.requireNonNull(this.getController().getTileAt(xPos, yPos)).removeOccupantRat(this);
             AudioClip deathSound = new AudioClip(
                     new File("target/classes/" + DEATH_SOUND_PATH).toURI().toString());
             deathSound.play();

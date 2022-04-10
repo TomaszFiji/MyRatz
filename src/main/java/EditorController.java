@@ -34,7 +34,7 @@ import java.io.File;
  * @version 1.0
  */
 
-public class EditorController {
+public class EditorController implements Controller {
 
 	// Size of one tile in pixels
 	private static final int TILE_SIZE = 64;
@@ -132,7 +132,9 @@ public class EditorController {
 	public EditorController(String levelName, MenuController mainMenuController) {
 		this.levelName = levelName;
 		MAIN_MENU = mainMenuController;
-
+		
+		LevelFileReader.setControlller(this);
+		
 		width = LevelFileReader.getWidth();
 		height = LevelFileReader.getHeight();
 
@@ -214,15 +216,15 @@ public class EditorController {
 		}
 		switch (type) {
 		case 'm':
-			tileMap[x][y].addOccupantRat(new AdultMale(1, Rat.Direction.NORTH, 0, 0, 0, false));
+			tileMap[x][y].addOccupantRat(new AdultMale(this, 1, Rat.Direction.NORTH, 0, 0, 0, false));
 			System.out.println("male " + x + " " + y + " " + tileMap);
 			break;
 		case 'f':
-			tileMap[x][y].addOccupantRat(new AdultFemale(1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0));
+			tileMap[x][y].addOccupantRat(new AdultFemale(this, 1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0));
 			System.out.println("female " + x + " " + y);
 			break;
 		case 'i':
-			tileMap[x][y].addOccupantRat(new AdultIntersex(1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0));
+			tileMap[x][y].addOccupantRat(new AdultIntersex(this, 1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0));
 			System.out.println("intersex " + x + " " + y);
 			break;
 		}
@@ -234,9 +236,9 @@ public class EditorController {
 	 * Sets up ability to drag rat spawns onto tilemap.
 	 */
 	private void setupDraggableSpawns() {
-		AdultMale adultMale = new AdultMale(1, Rat.Direction.NORTH, 0, 0, 0, false);
-		AdultFemale adultFemale = new AdultFemale(1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0);
-		AdultIntersex adultIntersex = new AdultIntersex(1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0);
+		AdultMale adultMale = new AdultMale(this, 1, Rat.Direction.NORTH, 0, 0, 0, false);
+		AdultFemale adultFemale = new AdultFemale(this, 1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0);
+		AdultIntersex adultIntersex = new AdultIntersex(this, 1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0);
 
 		ImageView adultMaleImageView = new ImageView(adultMale.getImg());
 		ImageView adultFemaleImageView = new ImageView(adultFemale.getImg());
@@ -615,13 +617,13 @@ public class EditorController {
 					ChildRat rat = (ChildRat) tileMap[i][j].getOccupantRats().get(0);
 					if (rat.getRatSex() == Rat.Sex.MALE) {
 						tileMap[i][j].removeOccupantRat(rat);
-						tileMap[i][j].addOccupantRat(new AdultMale(6, Rat.Direction.NORTH, 0, i, j, true));
+						tileMap[i][j].addOccupantRat(new AdultMale(this, 6, Rat.Direction.NORTH, 0, i, j, true));
 					} else if (rat.getRatSex() == Rat.Sex.FEMALE) {
 						tileMap[i][j].removeOccupantRat(rat);
-						tileMap[i][j].addOccupantRat(new AdultFemale(6, Rat.Direction.NORTH, 0, i, j, true, 0, 0));
+						tileMap[i][j].addOccupantRat(new AdultFemale(this, 6, Rat.Direction.NORTH, 0, i, j, true, 0, 0));
 					} else if (rat.getRatSex() == Rat.Sex.INTERSEX) {
 						tileMap[i][j].removeOccupantRat(rat);
-						tileMap[i][j].addOccupantRat(new AdultIntersex(6, Rat.Direction.NORTH, 0, i, j, true, 0, 0));
+						tileMap[i][j].addOccupantRat(new AdultIntersex(this, 6, Rat.Direction.NORTH, 0, i, j, true, 0, 0));
 					}
 				}
 			}
@@ -639,15 +641,15 @@ public class EditorController {
 					if (rat instanceof AdultMale) {
 						tileMap[i][j].removeOccupantRat(rat);
 						tileMap[i][j]
-								.addOccupantRat(new ChildRat(4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.MALE));
+								.addOccupantRat(new ChildRat(this, 4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.MALE));
 					} else if (rat instanceof AdultFemale) {
 						tileMap[i][j].removeOccupantRat(rat);
 						tileMap[i][j]
-								.addOccupantRat(new ChildRat(4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.FEMALE));
+								.addOccupantRat(new ChildRat(this, 4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.FEMALE));
 					} else if (rat instanceof AdultIntersex) {
 						tileMap[i][j].removeOccupantRat(rat);
 						tileMap[i][j].addOccupantRat(
-								new ChildRat(4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.INTERSEX));
+								new ChildRat(this, 4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.INTERSEX));
 					}
 				}
 			}
@@ -711,5 +713,47 @@ public class EditorController {
 			// TODO: handle this exception
 		}
 
+	}
+
+	@Override
+	public Tile getTileAt(int x, int y) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void ratKilled(Rat rat) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void ratAdded(Rat rat) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void ratRemoved(Rat rat) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public int[] getCounters() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public int getCurrentTimeLeft() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public void addPowersFromSave(int[] inProgInv) {
+		// TODO Auto-generated method stub
+		
 	}
 }

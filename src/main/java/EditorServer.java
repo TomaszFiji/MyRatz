@@ -37,7 +37,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
-public class EditorServer {
+public class EditorServer implements Controller {
 	private ServerSocket editorServer;
 	private int port;
 	private int counterOfClients = 0;
@@ -120,6 +120,22 @@ public class EditorServer {
 	// Level map
 	private Tile[][] tileMap = new Tile[0][0];
 
+	private void removeControllerFromMap() {
+		for (Tile[] tileList : tileMap) {
+			for (Tile t : tileList) {
+				t.setController(null);
+
+				for (Power p : t.getActivePowers()) {
+					p.setController(null);
+				}
+
+				for (Rat r : t.getOccupantRats()) {
+					r.setController(null);
+				}
+			}
+		}
+	}
+
 	public synchronized Tile[][] getTileMap() throws InterruptedException {
 		return tileMap;
 	}
@@ -175,11 +191,10 @@ public class EditorServer {
 //			dropRates[i] = dropRates[i] / MILLIS_RATIO;
 //		}
 	}
-	
+
 	public String getLevelName() {
 		return levelName;
 	}
-
 
 	public void runTheGame() throws IOException {
 
@@ -187,11 +202,11 @@ public class EditorServer {
 
 		if (isMapLoaded) {
 			if (isDefaultLevel) {
-				LevelFileReader.loadNormalLevelFile("src/main/resources/levels/default_levels/" + selectedEditLevelName,
-						true);
+				LevelFileReader.loadNormalLevelFile(this,
+						"src/main/resources/levels/default_levels/" + selectedEditLevelName, true);
 			} else {
-				LevelFileReader.loadNormalLevelFile("src/main/resources/levels/created_levels/" + selectedEditLevelName,
-						true);
+				LevelFileReader.loadNormalLevelFile(this,
+						"src/main/resources/levels/created_levels/" + selectedEditLevelName, true);
 			}
 		}
 
@@ -207,7 +222,7 @@ public class EditorServer {
 		for (int i = 0; i < dropRates.length; i++) {
 			dropRates[i] = dropRates[i] / MILLIS_RATIO;
 		}
-
+		this.removeControllerFromMap();
 		loader.setController(this);
 		Pane root = loader.load();
 
@@ -221,13 +236,13 @@ public class EditorServer {
 		System.out.println(editorServer.getLocalSocketAddress() + " " + InetAddress.getLocalHost().getHostAddress()
 				+ " " + editorServer.getLocalPort());
 		this.port = editorServer.getLocalPort();
-		
+
 		System.out.println("initializing");
 		EditorServerAcceptances esa = new EditorServerAcceptances(this, editorServer);
 		Thread esaThread = new Thread(esa);
 		esaThread.start();
 	}
-	
+
 	public int getPort() {
 		return editorServer.getLocalPort();
 	}
@@ -246,9 +261,9 @@ public class EditorServer {
 
 		clientOutputThread.start();
 		clientInputThread.start();
-		
+
 		counterOfClients++;
-		if(counterOfClients == 1) {
+		if (counterOfClients == 1) {
 			runTheGame();
 		}
 	}
@@ -315,15 +330,15 @@ public class EditorServer {
 		}
 		switch (inputs[1].charAt(0)) {
 		case 'm':
-			tileMap[x][y].addOccupantRat(new AdultMale(1, Rat.Direction.NORTH, 0, 0, 0, false));
+			tileMap[x][y].addOccupantRat(new AdultMale(this, 1, Rat.Direction.NORTH, 0, 0, 0, false));
 			System.out.println("male " + x + " " + y + " " + tileMap);
 			break;
 		case 'f':
-			tileMap[x][y].addOccupantRat(new AdultFemale(1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0));
+			tileMap[x][y].addOccupantRat(new AdultFemale(this, 1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0));
 			System.out.println("female " + x + " " + y);
 			break;
 		case 'i':
-			tileMap[x][y].addOccupantRat(new AdultIntersex(1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0));
+			tileMap[x][y].addOccupantRat(new AdultIntersex(this, 1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0));
 			System.out.println("intersex " + x + " " + y);
 			break;
 		}
@@ -346,15 +361,15 @@ public class EditorServer {
 		}
 		switch (type) {
 		case 'm':
-			tileMap[x][y].addOccupantRat(new AdultMale(1, Rat.Direction.NORTH, 0, 0, 0, false));
+			tileMap[x][y].addOccupantRat(new AdultMale(this, 1, Rat.Direction.NORTH, 0, 0, 0, false));
 			System.out.println("male " + x + " " + y + " " + tileMap);
 			break;
 		case 'f':
-			tileMap[x][y].addOccupantRat(new AdultFemale(1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0));
+			tileMap[x][y].addOccupantRat(new AdultFemale(this, 1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0));
 			System.out.println("female " + x + " " + y);
 			break;
 		case 'i':
-			tileMap[x][y].addOccupantRat(new AdultIntersex(1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0));
+			tileMap[x][y].addOccupantRat(new AdultIntersex(this, 1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0));
 			System.out.println("intersex " + x + " " + y);
 			break;
 		}
@@ -366,9 +381,9 @@ public class EditorServer {
 	 * Sets up ability to drag rat spawns onto tilemap.
 	 */
 	private void setupDraggableSpawns() {
-		AdultMale adultMale = new AdultMale(1, Rat.Direction.NORTH, 0, 0, 0, false);
-		AdultFemale adultFemale = new AdultFemale(1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0);
-		AdultIntersex adultIntersex = new AdultIntersex(1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0);
+		AdultMale adultMale = new AdultMale(this, 1, Rat.Direction.NORTH, 0, 0, 0, false);
+		AdultFemale adultFemale = new AdultFemale(this, 1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0);
+		AdultIntersex adultIntersex = new AdultIntersex(this, 1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0);
 
 		ImageView adultMaleImageView = new ImageView(adultMale.getImg());
 		ImageView adultFemaleImageView = new ImageView(adultFemale.getImg());
@@ -794,13 +809,15 @@ public class EditorServer {
 					ChildRat rat = (ChildRat) tileMap[i][j].getOccupantRats().get(0);
 					if (rat.getRatSex() == Rat.Sex.MALE) {
 						tileMap[i][j].removeOccupantRat(rat);
-						tileMap[i][j].addOccupantRat(new AdultMale(6, Rat.Direction.NORTH, 0, i, j, true));
+						tileMap[i][j].addOccupantRat(new AdultMale(this, 6, Rat.Direction.NORTH, 0, i, j, true));
 					} else if (rat.getRatSex() == Rat.Sex.FEMALE) {
 						tileMap[i][j].removeOccupantRat(rat);
-						tileMap[i][j].addOccupantRat(new AdultFemale(6, Rat.Direction.NORTH, 0, i, j, true, 0, 0));
+						tileMap[i][j]
+								.addOccupantRat(new AdultFemale(this, 6, Rat.Direction.NORTH, 0, i, j, true, 0, 0));
 					} else if (rat.getRatSex() == Rat.Sex.INTERSEX) {
 						tileMap[i][j].removeOccupantRat(rat);
-						tileMap[i][j].addOccupantRat(new AdultIntersex(6, Rat.Direction.NORTH, 0, i, j, true, 0, 0));
+						tileMap[i][j]
+								.addOccupantRat(new AdultIntersex(this, 6, Rat.Direction.NORTH, 0, i, j, true, 0, 0));
 					}
 				}
 			}
@@ -817,16 +834,16 @@ public class EditorServer {
 					Rat rat = tileMap[i][j].getOccupantRats().get(0);
 					if (rat instanceof AdultMale) {
 						tileMap[i][j].removeOccupantRat(rat);
-						tileMap[i][j]
-								.addOccupantRat(new ChildRat(4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.MALE));
+						tileMap[i][j].addOccupantRat(
+								new ChildRat(this, 4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.MALE));
 					} else if (rat instanceof AdultFemale) {
 						tileMap[i][j].removeOccupantRat(rat);
-						tileMap[i][j]
-								.addOccupantRat(new ChildRat(4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.FEMALE));
+						tileMap[i][j].addOccupantRat(
+								new ChildRat(this, 4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.FEMALE));
 					} else if (rat instanceof AdultIntersex) {
 						tileMap[i][j].removeOccupantRat(rat);
 						tileMap[i][j].addOccupantRat(
-								new ChildRat(4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.INTERSEX));
+								new ChildRat(this, 4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.INTERSEX));
 					}
 				}
 			}
@@ -890,6 +907,48 @@ public class EditorServer {
 		} catch (Throwable th) {
 			// TODO: handle this exception
 		}
+
+	}
+
+	@Override
+	public Tile getTileAt(int x, int y) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void ratKilled(Rat rat) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void ratAdded(Rat rat) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void ratRemoved(Rat rat) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public int[] getCounters() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public int getCurrentTimeLeft() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public void addPowersFromSave(int[] inProgInv) {
+		// TODO Auto-generated method stub
 
 	}
 }
