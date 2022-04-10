@@ -37,7 +37,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
-public class EditorServer implements Controller {
+public class EditorServer implements Controller, ServerInterface {
 	private ServerSocket editorServer;
 	private int port;
 	private int counterOfClients = 0;
@@ -137,6 +137,7 @@ public class EditorServer implements Controller {
 	}
 
 	public synchronized Tile[][] getTileMap() throws InterruptedException {
+		//this.removeControllerFromMap();
 		return tileMap;
 	}
 
@@ -238,9 +239,9 @@ public class EditorServer implements Controller {
 		this.port = editorServer.getLocalPort();
 
 		System.out.println("initializing");
-		EditorServerAcceptances esa = new EditorServerAcceptances(this, editorServer);
-		Thread esaThread = new Thread(esa);
-		esaThread.start();
+		ServerAcceptances esa = new ServerAcceptances(this, editorServer);
+		Thread saThread = new Thread(esa);
+		saThread.start();
 	}
 
 	public int getPort() {
@@ -330,15 +331,15 @@ public class EditorServer implements Controller {
 		}
 		switch (inputs[1].charAt(0)) {
 		case 'm':
-			tileMap[x][y].addOccupantRat(new AdultMale(this, 1, Rat.Direction.NORTH, 0, 0, 0, false));
+			tileMap[x][y].addOccupantRat(new AdultMale(null, 1, Rat.Direction.NORTH, 0, 0, 0, false));
 			System.out.println("male " + x + " " + y + " " + tileMap);
 			break;
 		case 'f':
-			tileMap[x][y].addOccupantRat(new AdultFemale(this, 1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0));
+			tileMap[x][y].addOccupantRat(new AdultFemale(null, 1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0));
 			System.out.println("female " + x + " " + y);
 			break;
 		case 'i':
-			tileMap[x][y].addOccupantRat(new AdultIntersex(this, 1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0));
+			tileMap[x][y].addOccupantRat(new AdultIntersex(null, 1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0));
 			System.out.println("intersex " + x + " " + y);
 			break;
 		}
@@ -361,15 +362,15 @@ public class EditorServer implements Controller {
 		}
 		switch (type) {
 		case 'm':
-			tileMap[x][y].addOccupantRat(new AdultMale(this, 1, Rat.Direction.NORTH, 0, 0, 0, false));
+			tileMap[x][y].addOccupantRat(new AdultMale(null, 1, Rat.Direction.NORTH, 0, 0, 0, false));
 			System.out.println("male " + x + " " + y + " " + tileMap);
 			break;
 		case 'f':
-			tileMap[x][y].addOccupantRat(new AdultFemale(this, 1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0));
+			tileMap[x][y].addOccupantRat(new AdultFemale(null, 1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0));
 			System.out.println("female " + x + " " + y);
 			break;
 		case 'i':
-			tileMap[x][y].addOccupantRat(new AdultIntersex(this, 1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0));
+			tileMap[x][y].addOccupantRat(new AdultIntersex(null, 1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0));
 			System.out.println("intersex " + x + " " + y);
 			break;
 		}
@@ -381,9 +382,9 @@ public class EditorServer implements Controller {
 	 * Sets up ability to drag rat spawns onto tilemap.
 	 */
 	private void setupDraggableSpawns() {
-		AdultMale adultMale = new AdultMale(this, 1, Rat.Direction.NORTH, 0, 0, 0, false);
-		AdultFemale adultFemale = new AdultFemale(this, 1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0);
-		AdultIntersex adultIntersex = new AdultIntersex(this, 1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0);
+		AdultMale adultMale = new AdultMale(null, 1, Rat.Direction.NORTH, 0, 0, 0, false);
+		AdultFemale adultFemale = new AdultFemale(null, 1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0);
+		AdultIntersex adultIntersex = new AdultIntersex(null, 1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0);
 
 		ImageView adultMaleImageView = new ImageView(adultMale.getImg());
 		ImageView adultFemaleImageView = new ImageView(adultFemale.getImg());
@@ -809,15 +810,15 @@ public class EditorServer implements Controller {
 					ChildRat rat = (ChildRat) tileMap[i][j].getOccupantRats().get(0);
 					if (rat.getRatSex() == Rat.Sex.MALE) {
 						tileMap[i][j].removeOccupantRat(rat);
-						tileMap[i][j].addOccupantRat(new AdultMale(this, 6, Rat.Direction.NORTH, 0, i, j, true));
+						tileMap[i][j].addOccupantRat(new AdultMale(null, 6, Rat.Direction.NORTH, 0, i, j, true));
 					} else if (rat.getRatSex() == Rat.Sex.FEMALE) {
 						tileMap[i][j].removeOccupantRat(rat);
 						tileMap[i][j]
-								.addOccupantRat(new AdultFemale(this, 6, Rat.Direction.NORTH, 0, i, j, true, 0, 0));
+								.addOccupantRat(new AdultFemale(null, 6, Rat.Direction.NORTH, 0, i, j, true, 0, 0));
 					} else if (rat.getRatSex() == Rat.Sex.INTERSEX) {
 						tileMap[i][j].removeOccupantRat(rat);
 						tileMap[i][j]
-								.addOccupantRat(new AdultIntersex(this, 6, Rat.Direction.NORTH, 0, i, j, true, 0, 0));
+								.addOccupantRat(new AdultIntersex(null, 6, Rat.Direction.NORTH, 0, i, j, true, 0, 0));
 					}
 				}
 			}
@@ -835,15 +836,15 @@ public class EditorServer implements Controller {
 					if (rat instanceof AdultMale) {
 						tileMap[i][j].removeOccupantRat(rat);
 						tileMap[i][j].addOccupantRat(
-								new ChildRat(this, 4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.MALE));
+								new ChildRat(null, 4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.MALE));
 					} else if (rat instanceof AdultFemale) {
 						tileMap[i][j].removeOccupantRat(rat);
 						tileMap[i][j].addOccupantRat(
-								new ChildRat(this, 4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.FEMALE));
+								new ChildRat(null, 4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.FEMALE));
 					} else if (rat instanceof AdultIntersex) {
 						tileMap[i][j].removeOccupantRat(rat);
 						tileMap[i][j].addOccupantRat(
-								new ChildRat(this, 4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.INTERSEX));
+								new ChildRat(null, 4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.INTERSEX));
 					}
 				}
 			}

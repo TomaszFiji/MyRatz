@@ -20,6 +20,7 @@ James 55
 Dom 12
 level-3 -1
 Dom 7456
+null 163
 Tomasz 154
 Tomasz 138
 Tomasz 136
@@ -27,6 +28,7 @@ James 128
 Tomasz 99
 James 33
 Tomasz 0
+null 0
 level-4 -1
 Tomasz 140
 James 133

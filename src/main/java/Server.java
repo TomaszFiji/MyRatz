@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
-public class Server {
+public class Server implements ServerInterface{
 	private ServerSocket serverSocket;
 	private ArrayList<Socket> clients = new ArrayList<>();
 	private ArrayList<EditorServer> editorServers = new ArrayList<>();

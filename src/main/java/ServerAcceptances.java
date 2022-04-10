@@ -3,10 +3,10 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 public class ServerAcceptances implements Runnable {
-	private Server server;
+	private ServerInterface server;
 	private ServerSocket serverSocket;
 
-	public ServerAcceptances(Server server, ServerSocket serverSocket) {
+	public ServerAcceptances(ServerInterface server, ServerSocket serverSocket) {
 		this.server = server;
 		this.serverSocket = serverSocket;
 	}

@@ -817,16 +817,16 @@ public class MenuController {
 	public void runServer(ActionEvent event) throws IOException {
 		System.out.println("move to server");
 
-		root = FXMLLoader.load(getClass().getResource("serverRunningScene.fxml"));
-		stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-		scene = new Scene(root);
-		stage.setScene(scene);
-		stage.show();
+//		root = FXMLLoader.load(getClass().getResource("serverRunningScene.fxml"));
+//		stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+//		scene = new Scene(root);
+//		stage.setScene(scene);
+//		stage.show();
 
-//		System.out.println("run server");
-//		changeToMenu(event);
-//		CooperationServer s = new CooperationServer("level-3",this, scene, stage);
-//		s.runTheGame();
+		System.out.println("run server");
+		changeToMenu(event);
+		CooperationServer s = new CooperationServer("level-3",this, scene, stage);
+		s.runTheGame();
 	}
 
 	private void updateServerView() throws IOException {
