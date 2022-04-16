@@ -30,6 +30,16 @@ public class Bomb extends Power {
 	Bomb(Controller controller, int xPos, int yPos) {
 		super(controller, true, xPos, yPos);
 	}
+	/**
+	 * Creates a new bomb with tick active
+	 *
+	 * @param xPos The x position to create the bomb
+	 * @param yPos The y position to create the bomb
+	 */
+	Bomb(Controller controller, int xPos, int yPos, int tickActive) {
+		super(controller, true, xPos, yPos);
+		this.ticksActive = tickActive;
+	}
 
 	/**
 	 * Abstract method to let any power know it's time to do something. For Bomb -

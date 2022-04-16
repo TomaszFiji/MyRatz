@@ -71,6 +71,33 @@ public class CooperationServerThreadObjectOutput implements Runnable {
 					}
 					
 				}
+				
+				for (Power p : tileMap[i][j].getActivePowers()) {
+					if (p instanceof Bomb) {
+						temp[i][j].addActivePower(new Bomb(null, p.getXPos(), p.getYPos(), ((Bomb) p).getTicksActive()));
+					}
+					if (p instanceof FemaleSwapper) {
+						temp[i][j].addActivePower(new FemaleSwapper(null, p.getXPos(), p.getYPos()));
+					}
+					if (p instanceof Gas) {
+						temp[i][j].addActivePower(new Gas(null, p.getXPos(), p.getYPos(), ((Gas) p).isOriginal()));
+					}
+					if (p instanceof MaleSwapper) {
+						temp[i][j].addActivePower(new MaleSwapper(null, p.getXPos(), p.getYPos()));
+					}
+					if (p instanceof Poison) {
+						temp[i][j].addActivePower(new Poison(null, p.getXPos(), p.getYPos()));
+					}
+					if (p instanceof Sterilisation) {
+						temp[i][j].addActivePower(new Sterilisation(null, p.getXPos(), p.getYPos()));
+					}
+					if (p instanceof StopSign) {
+						temp[i][j].addActivePower(new StopSign(null, p.getXPos(), p.getYPos(), ((StopSign) p).getHP()));
+					}
+					
+					
+					
+				}
 			}
 		}
 		return temp;

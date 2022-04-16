@@ -30,6 +30,18 @@ public class StopSign extends Power {
     StopSign(Controller controller,int xPos, int yPos) {
         super(controller, true, xPos, yPos);
     }
+    
+    /**
+     * StopSign constructor with HP
+     *
+     * @param xPos x coordinate.
+     * @param yPos y coordinate.
+     */
+    
+    StopSign(Controller controller,int xPos, int yPos, int HP) {
+    	super(controller, true, xPos, yPos);
+    	this.HP = HP;
+    }
 
     /**
      * Reduces the HP of the sign, removes itself from Tile when HP hits 0.
