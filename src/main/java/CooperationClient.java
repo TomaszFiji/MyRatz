@@ -128,11 +128,8 @@ public class CooperationClient implements Controller {
 	public Text savingErrorText;
 	public Button saveAndExitButton;
 
-	private Socket clientSocket;
+	private Socket server;
 	private int port;
-	private ArrayList<CooperationServerThreadObjectOutput> clientsObjectsOutputs = new ArrayList<>();
-	private ArrayList<CooperationServerThreadInput> clientsInputs = new ArrayList<>();
-	private int counterOfClients;
 	private Stage stage;
 	private Scene scene;
 	private CooperationClientListener clientListener;
@@ -159,7 +156,7 @@ public class CooperationClient implements Controller {
 	}
 
 	public void runClient(int port) throws IOException, ClassNotFoundException, InterruptedException {
-		Socket server = new Socket(SERVER_IP, port);
+		server = new Socket(SERVER_IP, Menu.SERVER_PORT);
 		clientListener = new CooperationClientListener(this, server);
 		clientOutput = new CooperationClientOutput(this, server);
 		Thread clientListenerThread = new Thread(clientListener);
@@ -168,6 +165,11 @@ public class CooperationClient implements Controller {
 		// clientListenerThread.start();
 
 		System.out.println("runned*******************************");
+	}
+	
+	public void setTileMap(Tile[][] tileMap) {
+		this.tileMap = tileMap;
+		this.renderGame();
 	}
 
 	public Tile[][] getTileMap() {
@@ -501,9 +503,6 @@ public class CooperationClient implements Controller {
 					tileMap[i][j].draw(i, j, gc);
 				}
 			}
-		}
-		for (CooperationServerThreadObjectOutput est : clientsObjectsOutputs) {
-			est.sendMap();
 		}
 	}
 

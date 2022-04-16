@@ -23,6 +23,7 @@ public class EditorClientListener implements Runnable {
 		try {
 			while (true) {
 
+				System.out.println("new listener client loop");
 				Object temp = inObject.readObject();
 				if (temp instanceof Tile[][] && temp != null) {
 					editorClient.setTileMap((Tile[][]) temp);

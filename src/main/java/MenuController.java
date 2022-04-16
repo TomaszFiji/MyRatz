@@ -826,7 +826,8 @@ public class MenuController {
 		System.out.println("run server");
 		changeToMenu(event);
 		CooperationServer s = new CooperationServer("level-3",this, scene, stage);
-		s.runTheGame();
+		//s.runTheGame();
+		s.runServer();
 	}
 
 	private void updateServerView() throws IOException {
@@ -855,11 +856,11 @@ public class MenuController {
 //		scene = new Scene(root);
 //		stage.setScene(scene);
 //		stage.show();
-		System.out.println("run client");
+		System.out.println("run client edfsfs");
 		changeToMenu(event);
 		CooperationClient c = new CooperationClient("level-3", this, scene, stage);
 		c.runTheGame("level-3", true, scene, stage, this);
-		//c.runClient();
+		c.runClient(0);
 	}
 
 	@FXML
@@ -871,11 +872,6 @@ public class MenuController {
 			System.out.println("this.client is null");
 		} else {
 			System.out.println("this.client is not null");
-		}
-		if (client == null) {
-			System.out.println("client is null");
-		} else {
-			System.out.println("client is not null");
 			changeToClientLevelSelection(event);
 		}
 //		} catch (Exception e) {
@@ -892,17 +888,11 @@ public class MenuController {
 			System.out.println("this.client is not null");
 		}
 		// serverViewUpdated = false;
-		System.out.println("ttest0");
 		root = FXMLLoader.load(getClass().getResource("clientLevelSelection.fxml"));
-		System.out.println("ttest1");
 		stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-		System.out.println("ttest2");
 		scene = new Scene(root);
-		System.out.println("ttest3");
 		stage.setScene(scene);
-		System.out.println("ttest4");
 		stage.show();
-		System.out.println("ttest5");
 		if (this.client == null) {
 			System.out.println("this.client is null aft1");
 		} else {

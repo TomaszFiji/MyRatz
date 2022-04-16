@@ -1,6 +1,7 @@
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -15,6 +16,7 @@ import javax.imageio.ImageIO;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -39,7 +41,7 @@ import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
-public class CooperationServer implements Controller, ServerInterface {
+public class CooperationServer implements Controller, ServerInterface, Serializable {
 	private static final int ITEM_NUM = 8;
 	private static final int TILE_SIZE = 64;
 	private final int[] counters = new int[ITEM_NUM];
@@ -134,6 +136,7 @@ public class CooperationServer implements Controller, ServerInterface {
 	private int counterOfClients;
 	private Stage stage;
 	private Scene scene;
+
 	/**
 	 * Constructor for LevelController class.
 	 *
@@ -155,15 +158,28 @@ public class CooperationServer implements Controller, ServerInterface {
 	}
 
 	public void runServer() throws IOException {
-		cooperationServer = new ServerSocket(0);
+		cooperationServer = new ServerSocket(Menu.SERVER_PORT);
 		System.out.println(cooperationServer.getLocalSocketAddress() + " " + InetAddress.getLocalHost().getHostAddress()
 				+ " " + cooperationServer.getLocalPort());
 		this.port = cooperationServer.getLocalPort();
 
 		System.out.println("initializing");
-		ServerAcceptances esa = new ServerAcceptances(this, cooperationServer);
-		Thread esaThread = new Thread(esa);
-		esaThread.start();
+//		ServerAcceptances esa = new ServerAcceptances(this, cooperationServer);
+//		Thread esaThread = new Thread(esa);
+//		esaThread.start();
+//		Platform.runLater(new Runnable() {
+//			public void run() {
+//				while (true) {
+					try {
+						Socket client = cooperationServer.accept();
+						addClient(client);
+						System.out.println("clientAdded");
+					} catch (IOException e) {
+
+					}
+//				}
+//			}
+//		});
 	}
 
 	public void addClient(Socket client) throws IOException {
@@ -189,7 +205,28 @@ public class CooperationServer implements Controller, ServerInterface {
 	}
 
 	public Tile[][] getTileMap() {
+
+		//return this.removeControllerFromMap(tileMap);
 		return tileMap;
+	}
+
+	private Tile[][] removeControllerFromMap(Tile[][] tileMap) {
+		Tile[][] tempTileMap = tileMap.clone();
+		System.out.println(tileMap + " " + tempTileMap + " " + (tileMap == tempTileMap));
+		for (Tile[] tileList : tempTileMap) {
+			for (Tile t : tileList) {
+				t.setController(null);
+
+				for (Power p : t.getActivePowers()) {
+					p.setController(null);
+				}
+
+				for (Rat r : t.getOccupantRats()) {
+					r.setController(null);
+				}
+			}
+		}
+		return tempTileMap;
 	}
 
 	public void runTheGame() throws IOException {
@@ -198,9 +235,8 @@ public class CooperationServer implements Controller, ServerInterface {
 		FXMLLoader loader = new FXMLLoader(getClass().getResource("level.fxml"));
 
 //		LevelFileReader.setControlller(this);
-		LevelFileReader.loadNormalLevelFile(this, "src/main/resources/levels/default_levels/" + LEVEL_NAME,
-				true);
-		
+		LevelFileReader.loadNormalLevelFile(this, "src/main/resources/levels/default_levels/" + LEVEL_NAME, true);
+
 		WIDTH = LevelFileReader.getWidth();
 		HEIGHT = LevelFileReader.getHeight();
 
@@ -220,6 +256,31 @@ public class CooperationServer implements Controller, ServerInterface {
 		scene = new Scene(root, root.getPrefWidth(), root.getPrefHeight());
 		stage.setScene(scene);
 		stage.show();
+		System.out.println("finished runing the game server");
+
+		currentTimeLeft = PAR_TIME * 1000;
+		timerLabel.setText(millisToString(currentTimeLeft));
+
+		toolbars = Arrays.asList(bombToolbar, gasToolbar, sterilisationToolbar, poisonToolbar, maleSwapToolbar,
+				femaleSwapToolbar, stopSignToolbar, deathRatToolbar);
+		Arrays.fill(counters, 0);
+
+		System.out.println("Initialize test server0");
+		renderAllItems();
+		setupCanvasDragBehaviour();
+
+		System.out.println("Initialize test server1");
+		renderGame();
+		System.out.println("Initialize test server2");
+
+		tickTimeline = new Timeline(new KeyFrame(Duration.millis(FRAME_TIME), event -> tick()));
+		tickTimeline.setCycleCount(Animation.INDEFINITE);
+		tickTimeline.play();
+
+		// Start the SeaShantySimulator (music player)
+		SeaShantySimulator seaShantySimulator = new SeaShantySimulator();
+		seaShantySimulator.initialize();
+		seaShantySimulator.play();
 	}
 
 	/**
@@ -244,32 +305,7 @@ public class CooperationServer implements Controller, ServerInterface {
 	 * Initializes game.
 	 */
 	public void initialize() {
-		currentTimeLeft = PAR_TIME * 1000;
-		timerLabel.setText(millisToString(currentTimeLeft));
 
-		toolbars = Arrays.asList(bombToolbar, gasToolbar, sterilisationToolbar, poisonToolbar, maleSwapToolbar,
-				femaleSwapToolbar, stopSignToolbar, deathRatToolbar);
-		Arrays.fill(counters, 0);
-
-		renderAllItems();
-		setupCanvasDragBehaviour();
-
-		renderGame();
-
-		if (LevelFileReader.getHasLoadedSavedLevel()) {
-			System.arraycopy(LevelFileReader.getInProgInv(), 0, timeUntilDrop, 0, timeUntilDrop.length);
-		} else {
-			System.arraycopy(DROP_RATES, 0, timeUntilDrop, 0, timeUntilDrop.length);
-		}
-
-		tickTimeline = new Timeline(new KeyFrame(Duration.millis(FRAME_TIME), event -> tick()));
-		tickTimeline.setCycleCount(Animation.INDEFINITE);
-		tickTimeline.play();
-
-		// Start the SeaShantySimulator (music player)
-		SeaShantySimulator seaShantySimulator = new SeaShantySimulator();
-		seaShantySimulator.initialize();
-		seaShantySimulator.play();
 	}
 
 	/**
@@ -351,6 +387,7 @@ public class CooperationServer implements Controller, ServerInterface {
 	 * Periodically refreshes game.
 	 */
 	public void tick() {
+		System.out.println("tick ");
 		if ((femaleRatCounter + maleRatCounter + otherRatCounter) == 0) {
 			endGame(true);
 		} else if ((femaleRatCounter + maleRatCounter + otherRatCounter) >= MAX_RATS) {
