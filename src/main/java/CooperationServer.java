@@ -164,19 +164,22 @@ public class CooperationServer implements Controller, ServerInterface, Serializa
 		this.port = cooperationServer.getLocalPort();
 
 		System.out.println("initializing");
-//		ServerAcceptances esa = new ServerAcceptances(this, cooperationServer);
-//		Thread esaThread = new Thread(esa);
-//		esaThread.start();
+		ServerAcceptances esa = new ServerAcceptances(this, cooperationServer);
+		Thread esaThread = new Thread(esa);
+		esaThread.start();
 //		Platform.runLater(new Runnable() {
 //			public void run() {
 //				while (true) {
-					try {
-						Socket client = cooperationServer.accept();
-						addClient(client);
-						System.out.println("clientAdded");
-					} catch (IOException e) {
-
-					}
+//		try {
+//			Socket client = cooperationServer.accept();
+//			addClient(client);
+//			System.out.println("clientAdded");
+//			Socket client2 = cooperationServer.accept();
+//			addClient(client2);
+//			System.out.println("clientAdded");
+//		} catch (IOException e) {
+//
+//		}
 //				}
 //			}
 //		});
@@ -198,7 +201,7 @@ public class CooperationServer implements Controller, ServerInterface, Serializa
 		clientInputThread.start();
 
 		counterOfClients++;
-		if (counterOfClients == 1) {
+		if (counterOfClients == 2) {
 			runTheGame();
 		}
 
@@ -206,27 +209,8 @@ public class CooperationServer implements Controller, ServerInterface, Serializa
 
 	public Tile[][] getTileMap() {
 
-		//return this.removeControllerFromMap(tileMap);
+		// return this.removeControllerFromMap(tileMap);
 		return tileMap;
-	}
-
-	private Tile[][] removeControllerFromMap(Tile[][] tileMap) {
-		Tile[][] tempTileMap = tileMap.clone();
-		System.out.println(tileMap + " " + tempTileMap + " " + (tileMap == tempTileMap));
-		for (Tile[] tileList : tempTileMap) {
-			for (Tile t : tileList) {
-				t.setController(null);
-
-				for (Power p : t.getActivePowers()) {
-					p.setController(null);
-				}
-
-				for (Rat r : t.getOccupantRats()) {
-					r.setController(null);
-				}
-			}
-		}
-		return tempTileMap;
 	}
 
 	public void runTheGame() throws IOException {
@@ -273,7 +257,7 @@ public class CooperationServer implements Controller, ServerInterface, Serializa
 		renderGame();
 		System.out.println("Initialize test server2");
 
-		tickTimeline = new Timeline(new KeyFrame(Duration.millis(FRAME_TIME), event -> tick()));
+		tickTimeline = new Timeline(new KeyFrame(Duration.millis(250), event -> tick()));
 		tickTimeline.setCycleCount(Animation.INDEFINITE);
 		tickTimeline.play();
 
@@ -408,6 +392,15 @@ public class CooperationServer implements Controller, ServerInterface, Serializa
 				currentTimeLeft = currentTimeLeft - FRAME_TIME;
 				timerLabel.setText(millisToString(currentTimeLeft));
 			}
+
+			TimeAndRatCounters temp = new TimeAndRatCounters(millisToString(currentTimeLeft),
+					String.valueOf(maleRatCounter), String.valueOf(femaleRatCounter),
+					(femaleRatCounter + maleRatCounter + otherRatCounter) + "/" + (MAX_RATS));
+			
+			for (CooperationServerThreadObjectOutput est : clientsObjectsOutputs) {
+				System.out.print("counters  ");
+				est.sendTimeAndRatCounters(temp);
+			}
 		}
 	}
 
@@ -444,6 +437,12 @@ public class CooperationServer implements Controller, ServerInterface, Serializa
 				timeUntilDrop[i] = DROP_RATES[i];
 				renderItem(i);
 			}
+		}
+
+		for (CooperationServerThreadObjectOutput est : clientsObjectsOutputs) {
+			System.out.print("items  ");
+			est.sendItems();
+			;
 		}
 	}
 
@@ -538,6 +537,59 @@ public class CooperationServer implements Controller, ServerInterface, Serializa
 		}
 	}
 
+	public void placePower(String[] inputs) {
+		int x = Integer.valueOf(inputs[2]);
+		int y = Integer.valueOf(inputs[3]);
+		int index = Integer.valueOf(inputs[1]);
+		
+		Power power = null;
+		boolean addPower = true;
+		switch (index) {
+		case 0:
+			power = new Bomb(this, x, y);
+			break;
+		case 1:
+			power = new Gas(this, x, y, true);
+			break;
+		case 2:
+			power = new Sterilisation(this, x, y);
+			break;
+		case 3:
+			power = new Poison(this, x, y);
+			break;
+		case 4:
+			power = new MaleSwapper(this, x, y);
+			break;
+		case 5:
+			power = new FemaleSwapper(this, x, y);
+			break;
+		case 6:
+			power = new StopSign(this, x, y);
+			break;
+		case 7:
+			SeaShantySimulator seaSim = new SeaShantySimulator();
+			int randomNum = ThreadLocalRandom.current().nextInt(1, 3);
+			if (randomNum == 1) {
+				seaSim.playAudioClip(DEATH_RAT_SOUND_1_PATH, SOUND_VOLUME_RAT);
+			} else if (randomNum == 2) {
+				seaSim.playAudioClip(DEATH_RAT_SOUND_2_PATH, SOUND_VOLUME_RAT);
+			} else {
+				seaSim.playAudioClip(DEATH_RAT_SOUND_3_PATH, SOUND_VOLUME_RAT);
+			}
+
+			tileMap[x][y].addOccupantRat(new DeathRat(this, Rat.getDEFAULT_SPEED(), Rat.Direction.NORTH, 0, x, y, 0));
+			addPower = false;
+			break;
+		default:
+			addPower = false;
+		}
+		if (addPower) {
+			tileMap[x][y].addActivePower(power);
+		}
+
+		counters[index]--;
+		renderItem(index);
+	}
 	/**
 	 * Adds item dropped by the player onto a Tile.
 	 *

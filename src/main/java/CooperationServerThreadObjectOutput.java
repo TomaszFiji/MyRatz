@@ -20,14 +20,34 @@ public class CooperationServerThreadObjectOutput implements Runnable {
 
 	public void sendMap() {
 		try {
-			System.out.println("Sending map1");
 			Tile[][] temp = server.getTileMap();
-			System.out.println("Sending map2");
 			outObject.writeObject(cloneTileMap(temp));
-			System.out.println("Sending map3");
 			outObject.reset();
 			System.gc();
-			System.out.println("Sending map finished");
+//			System.out.println("Sending map finished");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void sendItems() {
+		try {
+			int[] temp = server.getCounters();
+			outObject.writeObject(temp);
+			outObject.reset();
+			System.gc();
+//			System.out.println("Sending items finished");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void sendTimeAndRatCounters(TimeAndRatCounters temp) {
+		try {
+			outObject.writeObject(temp);
+			outObject.reset();
+			System.gc();
+//			System.out.println("Sending time and counters finished");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -58,23 +78,27 @@ public class CooperationServerThreadObjectOutput implements Runnable {
 								r.getXPos(), r.getYPos(), ((AdultMale) r).getFertile()));
 					} else if (r instanceof AdultFemale) {
 						temp[i][j].addOccupantRat(new AdultFemale(null, r.getSpeed(), r.getDirection(), r.getGasTimer(),
-								r.getXPos(), r.getYPos(), ((AdultFemale) r).getFertile(), ((AdultFemale) r).getPregnancyTime(), ((AdultFemale) r).getRatFetusCount()));
+								r.getXPos(), r.getYPos(), ((AdultFemale) r).getFertile(),
+								((AdultFemale) r).getPregnancyTime(), ((AdultFemale) r).getRatFetusCount()));
 					} else if (r instanceof AdultIntersex) {
-						temp[i][j].addOccupantRat(new AdultIntersex(null, r.getSpeed(), r.getDirection(), r.getGasTimer(),
-								r.getXPos(), r.getYPos(), ((AdultIntersex) r).getFertile(), ((AdultIntersex) r).getPregnancyTime(), ((AdultIntersex) r).getRatFetusCount()));
+						temp[i][j].addOccupantRat(new AdultIntersex(null, r.getSpeed(), r.getDirection(),
+								r.getGasTimer(), r.getXPos(), r.getYPos(), ((AdultIntersex) r).getFertile(),
+								((AdultIntersex) r).getPregnancyTime(), ((AdultIntersex) r).getRatFetusCount()));
 					} else if (r instanceof DeathRat) {
 						temp[i][j].addOccupantRat(new DeathRat(null, r.getSpeed(), r.getDirection(), r.getGasTimer(),
 								r.getXPos(), r.getYPos(), ((DeathRat) r).getKillCounter()));
 					} else if (r instanceof ChildRat) {
 						temp[i][j].addOccupantRat(new ChildRat(null, r.getSpeed(), r.getDirection(), r.getGasTimer(),
-								r.getXPos(), r.getYPos(), ((ChildRat) r).getFertile(), ((ChildRat) r).getAge(), ((ChildRat) r).getRatSex()));						
+								r.getXPos(), r.getYPos(), ((ChildRat) r).getFertile(), ((ChildRat) r).getAge(),
+								((ChildRat) r).getRatSex()));
 					}
-					
+
 				}
-				
+
 				for (Power p : tileMap[i][j].getActivePowers()) {
 					if (p instanceof Bomb) {
-						temp[i][j].addActivePower(new Bomb(null, p.getXPos(), p.getYPos(), ((Bomb) p).getTicksActive()));
+						temp[i][j]
+								.addActivePower(new Bomb(null, p.getXPos(), p.getYPos(), ((Bomb) p).getTicksActive()));
 					}
 					if (p instanceof FemaleSwapper) {
 						temp[i][j].addActivePower(new FemaleSwapper(null, p.getXPos(), p.getYPos()));
@@ -94,9 +118,7 @@ public class CooperationServerThreadObjectOutput implements Runnable {
 					if (p instanceof StopSign) {
 						temp[i][j].addActivePower(new StopSign(null, p.getXPos(), p.getYPos(), ((StopSign) p).getHP()));
 					}
-					
-					
-					
+
 				}
 			}
 		}
@@ -105,7 +127,7 @@ public class CooperationServerThreadObjectOutput implements Runnable {
 
 	private Tile[][] removeControllerFromMap(Tile[][] tileMap) {
 		Tile[][] tempTileMap = tileMap.clone();
-		System.out.println(tileMap + " " + tempTileMap + " " + (tileMap == tempTileMap));
+//		System.out.println(tileMap + " " + tempTileMap + " " + (tileMap == tempTileMap));
 		for (Tile[] tileList : tempTileMap) {
 			for (Tile t : tileList) {
 				t.setController(null);

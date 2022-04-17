@@ -2,6 +2,8 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import javafx.application.Platform;
+
 public class ServerAcceptances implements Runnable {
 	private ServerInterface server;
 	private ServerSocket serverSocket;
@@ -15,7 +17,13 @@ public class ServerAcceptances implements Runnable {
 		while (true) {
 			try {
 				Socket client = serverSocket.accept();
-				server.addClient(client);
+				Platform.runLater(() -> {
+					try {
+						server.addClient(client);
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				});
 				System.out.println("clientAdded");
 			} catch (IOException e) {
 

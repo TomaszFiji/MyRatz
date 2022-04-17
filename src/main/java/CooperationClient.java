@@ -42,7 +42,7 @@ public class CooperationClient implements Controller {
 
 	private static final int ITEM_NUM = 8;
 	private static final int TILE_SIZE = 64;
-	private final int[] counters = new int[ITEM_NUM];
+	private int[] counters = new int[ITEM_NUM];
 
 	private static final String defaultLevelRegex = "level-[1-5]";
 
@@ -96,7 +96,7 @@ public class CooperationClient implements Controller {
 	private List<HBox> toolbars;
 
 	// Game timeline
-	//private Timeline tickTimeline;
+	// private Timeline tickTimeline;
 
 	@FXML
 	public Canvas levelCanvas; // Game map canvas
@@ -166,7 +166,7 @@ public class CooperationClient implements Controller {
 
 		System.out.println("runned*******************************");
 	}
-	
+
 	public void setTileMap(Tile[][] tileMap) {
 		this.tileMap = tileMap;
 		this.renderGame();
@@ -189,11 +189,10 @@ public class CooperationClient implements Controller {
 					"src/main/resources/levels/created_levels/" + selectedEditLevelName, true);
 		}
 
-		
 		WIDTH = LevelFileReader.getWidth();
 		HEIGHT = LevelFileReader.getHeight();
 
-		buildNewLevel();
+//		buildNewLevel();
 
 		MAX_RATS = LevelFileReader.getMaxRats();
 		if (LevelFileReader.getInProgTimer() != -1) {
@@ -202,9 +201,7 @@ public class CooperationClient implements Controller {
 			PAR_TIME = LevelFileReader.getParTime();
 		}
 		DROP_RATES = LevelFileReader.getDropRates();
-		
-		
-		
+
 		loader.setController(this);
 		Pane root = loader.load();
 
@@ -212,36 +209,6 @@ public class CooperationClient implements Controller {
 		stage.setScene(scene);
 		stage.show();
 	}
-//
-//	public void runTheGame() throws IOException {
-//		System.out.println("Running the game");
-//
-//		FXMLLoader loader = new FXMLLoader(getClass().getResource("level.fxml"));
-//
-////		LevelFileReader.setControlller(this);
-//		LevelFileReader.loadNormalLevelFile(this, "src/main/resources/levels/default_levels/" + LEVEL_NAME,
-//				true);
-//		
-//		WIDTH = LevelFileReader.getWidth();
-//		HEIGHT = LevelFileReader.getHeight();
-//
-//		buildNewLevel();
-//
-//		MAX_RATS = LevelFileReader.getMaxRats();
-//		if (LevelFileReader.getInProgTimer() != -1) {
-//			PAR_TIME = LevelFileReader.getInProgTimer();
-//		} else {
-//			PAR_TIME = LevelFileReader.getParTime();
-//		}
-//		DROP_RATES = LevelFileReader.getDropRates();
-//
-//		loader.setController(this);
-//		Pane root = loader.load();
-//
-//		scene = new Scene(root, root.getPrefWidth(), root.getPrefHeight());
-//		stage.setScene(scene);
-//		stage.show();
-//	}
 
 	/**
 	 * Returns current timer.
@@ -261,19 +228,25 @@ public class CooperationClient implements Controller {
 		return counters;
 	}
 
+	public void setCounters(int[] counters) {
+		// this.counters = counters;
+		this.renderAllItemsSafely(counters);
+		setupCanvasDragBehaviour();
+	}
+
 	/**
 	 * Initializes game.
 	 */
 	public void initialize() {
 		currentTimeLeft = PAR_TIME * 1000;
-		//timerLabel.setText(millisToString(currentTimeLeft));
+		// timerLabel.setText(millisToString(currentTimeLeft));
 
-		//toolbars = Arrays.asList(bombToolbar, gasToolbar, sterilisationToolbar, poisonToolbar, maleSwapToolbar,
-		//		femaleSwapToolbar, stopSignToolbar, deathRatToolbar);
-		Arrays.fill(counters, 0);
+		toolbars = Arrays.asList(bombToolbar, gasToolbar, sterilisationToolbar, poisonToolbar, maleSwapToolbar,
+				femaleSwapToolbar, stopSignToolbar, deathRatToolbar);
+		Arrays.fill(counters, 2);
 
 //		renderAllItems();
-//		setupCanvasDragBehaviour();
+		setupCanvasDragBehaviour();
 
 		renderGame();
 
@@ -357,38 +330,45 @@ public class CooperationClient implements Controller {
 	 * @param millis milliseconds as int.
 	 * @return String mm:ss.
 	 */
-	public String millisToString(int millis) {
-		int seconds = millis / 1000;
-		int minutes = (int) TimeUnit.SECONDS.toMinutes(seconds);
-		int remainSeconds = seconds - (int) TimeUnit.MINUTES.toSeconds(minutes);
-		return String.format("%02d:%02d", minutes, remainSeconds);
-	}
+//	public String millisToString(int millis) {
+//		int seconds = millis / 1000;
+//		int minutes = (int) TimeUnit.SECONDS.toMinutes(seconds);
+//		int remainSeconds = seconds - (int) TimeUnit.MINUTES.toSeconds(minutes);
+//		return String.format("%02d:%02d", minutes, remainSeconds);
+//	}
 
 	/**
 	 * Periodically refreshes game.
 	 */
-	public void tick() {
-		if ((femaleRatCounter + maleRatCounter + otherRatCounter) == 0) {
-			endGame(true);
-		} else if ((femaleRatCounter + maleRatCounter + otherRatCounter) >= MAX_RATS) {
-			endGame(false);
-		} else {
-			addPowers();
+//	public void tick() {
+//		if ((femaleRatCounter + maleRatCounter + otherRatCounter) == 0) {
+//			endGame(true);
+//		} else if ((femaleRatCounter + maleRatCounter + otherRatCounter) >= MAX_RATS) {
+//			endGame(false);
+//		} else {
+//			addPowers();
+//
+//			for (Tile[] tiles : tileMap) {
+//				for (Tile tile : tiles) {
+//					tile.update();
+//				}
+//			}
+//
+//			renderGame();
+//			renderCounters();
+//
+//			if (currentTimeLeft > 0) {
+//				currentTimeLeft = currentTimeLeft - FRAME_TIME;
+//				timerLabel.setText(millisToString(currentTimeLeft));
+//			}
+//		}
+//	}
 
-			for (Tile[] tiles : tileMap) {
-				for (Tile tile : tiles) {
-					tile.update();
-				}
-			}
-
-			renderGame();
-			renderCounters();
-
-			if (currentTimeLeft > 0) {
-				currentTimeLeft = currentTimeLeft - FRAME_TIME;
-				timerLabel.setText(millisToString(currentTimeLeft));
-			}
-		}
+	public void setTimeAndCounters(TimeAndRatCounters temp) {
+		maleRatCounterLabel.setText(temp.getMaleRatCounter());
+		femaleRatCounterLabel.setText(temp.getFemaleRatCounter());
+		ratCounterLabel.setText(temp.getRatCounter());
+		timerLabel.setText(temp.getTimeLeft());
 	}
 
 	/**
@@ -418,13 +398,9 @@ public class CooperationClient implements Controller {
 		}
 
 		for (int i = 0; i < counters.length; i++) {
-			timeUntilDrop[i] -= FRAME_TIME;
-			if (timeUntilDrop[i] <= 0 && counters[i] < 4) {
-				counters[i]++;
-				timeUntilDrop[i] = DROP_RATES[i];
-				renderItem(i);
-			}
+			renderItem(i);
 		}
+
 	}
 
 	/**
@@ -433,7 +409,7 @@ public class CooperationClient implements Controller {
 	 * @param wonGame whether level was won.
 	 */
 	private void endGame(boolean wonGame) {
-		//tickTimeline.stop();
+		// tickTimeline.stop();
 		disableToolbars();
 		saveLevelStateButton.setDisable(true);
 
@@ -515,6 +491,18 @@ public class CooperationClient implements Controller {
 		}
 	}
 
+	private void renderAllItemsSafely(int[] newCounters) {
+
+		int[] previousCounters = counters.clone();
+		this.counters = newCounters;
+		for (int i = 0; i < counters.length; i++) {
+			if (counters[i] != previousCounters[i]) {
+				renderItem(i);
+			}
+		}
+		
+	}
+
 	/**
 	 * Adds item dropped by the player onto a Tile.
 	 *
@@ -525,6 +513,8 @@ public class CooperationClient implements Controller {
 		int x = (int) event.getX() / TILE_SIZE;
 		int y = (int) event.getY() / TILE_SIZE;
 
+		System.out.println("Item Dropped : " + index + " at tile: " + x + " : " + y );
+		clientOutput.placePower(index, x, y);
 		Power power = null;
 		boolean addPower = true;
 		switch (index) {
@@ -632,7 +622,7 @@ public class CooperationClient implements Controller {
 	 */
 	@FXML
 	public void openSaveDialogue() {
-		//tickTimeline.stop();
+		// tickTimeline.stop();
 		disableToolbars();
 		saveLevelStateButton.setDisable(true);
 		savingErrorText.setText("");
@@ -660,6 +650,7 @@ public class CooperationClient implements Controller {
 	 * @param index the number representing an item in the toolbar
 	 */
 	private void renderItem(int index) {
+
 		toolbars.get(index).getChildren().clear();
 
 		ImageView[] items = new ImageView[counters[index]];
@@ -669,6 +660,9 @@ public class CooperationClient implements Controller {
 			toolbars.get(index).getChildren().add(items[i]);
 			makeDraggable(item, index);
 		}
+//		} catch (Exception ignored) {
+//			System.out.println("Can not render items");
+//		}
 	}
 
 	/**
@@ -694,7 +688,9 @@ public class CooperationClient implements Controller {
 	 * @param dbContent String used in setupCanvasDragBehaviour.
 	 */
 	private void makeDraggable(final ImageView item, int dbContent) {
+		System.out.println("Attempt  to make draggable");
 		item.setOnDragDetected(event -> {
+			System.out.println("Drag detected");
 			Dragboard dragboard = item.startDragAndDrop(TransferMode.MOVE);
 			ClipboardContent clipboardContent = new ClipboardContent();
 			clipboardContent.putString(String.valueOf(dbContent));
