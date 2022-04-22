@@ -8,6 +8,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -44,14 +46,10 @@ public class EditorServer implements Controller, ServerInterface {
 	private final String selectedEditLevelName;
 	private final boolean isDefaultLevel = true;
 	private boolean isMapLoaded = true;
-	private Scene scene;
-	private Stage stage;
 	private ArrayList<EditorServerThreadObjectOutput> clientsObjectsOutputs = new ArrayList<>();
 	private ArrayList<EditorServerThreadInput> clientsInputs = new ArrayList<>();
-
-	private boolean areAllReady() {
-		return false;
-	}
+	private ArrayList<Thread> clientsInputsThreads = new ArrayList<>();
+	private HashMap<Socket, Boolean> clients = new HashMap<>();
 
 	// Size of one tile in pixels
 	private static final int TILE_SIZE = 64;
@@ -119,6 +117,7 @@ public class EditorServer implements Controller, ServerInterface {
 
 	// Level map
 	private Tile[][] tileMap = new Tile[0][0];
+	private Server server;
 
 	private void removeControllerFromMap() {
 		for (Tile[] tileList : tileMap) {
@@ -137,7 +136,7 @@ public class EditorServer implements Controller, ServerInterface {
 	}
 
 	public synchronized Tile[][] getTileMap() throws InterruptedException {
-		//this.removeControllerFromMap();
+		// this.removeControllerFromMap();
 		return tileMap;
 	}
 
@@ -171,13 +170,14 @@ public class EditorServer implements Controller, ServerInterface {
 	 * @param levelName          name of original existing level.
 	 * @param mainMenuController reference to main menu.
 	 */
-	public EditorServer(String levelName, MenuController mainMenuController, Scene scene, Stage stage) {
+	public EditorServer(String levelName, Server server) {
+		this.server = server;
 		this.isMapLoaded = true;
-		this.scene = scene;
-		this.stage = stage;
+//		this.scene = scene;
+//		this.stage = stage;
 		this.selectedEditLevelName = levelName;
 		this.levelName = levelName;
-		MAIN_MENU = mainMenuController;
+//		MAIN_MENU = mainMenuController;
 
 //		width = LevelFileReader.getWidth();
 //		height = LevelFileReader.getHeight();
@@ -204,10 +204,10 @@ public class EditorServer implements Controller, ServerInterface {
 		if (isMapLoaded) {
 			if (isDefaultLevel) {
 				LevelFileReader.loadNormalLevelFile(this,
-						"src/main/resources/levels/default_levels/" + selectedEditLevelName, true);
+						"src/main/resources/server_levels/default_levels/" + selectedEditLevelName, true);
 			} else {
 				LevelFileReader.loadNormalLevelFile(this,
-						"src/main/resources/levels/created_levels/" + selectedEditLevelName, true);
+						"src/main/resources/server_levels/created_levels/" + selectedEditLevelName, true);
 			}
 		}
 
@@ -227,9 +227,9 @@ public class EditorServer implements Controller, ServerInterface {
 		loader.setController(this);
 		Pane root = loader.load();
 
-		scene = new Scene(root, root.getPrefWidth(), root.getPrefHeight());
-		stage.setScene(scene);
-		stage.show();
+//		scene = new Scene(root, root.getPrefWidth(), root.getPrefHeight());
+//		stage.setScene(scene);
+//		stage.show();
 	}
 
 	public void runServer() throws IOException {
@@ -248,7 +248,76 @@ public class EditorServer implements Controller, ServerInterface {
 		return editorServer.getLocalPort();
 	}
 
+	private void setAllNotReady() {
+		Set<Socket> temp = clients.keySet();
+
+		for (Socket c : temp) {
+			clients.replace(c, false);
+
+		}
+
+		for (EditorServerThreadObjectOutput c : clientsObjectsOutputs) {
+			c.setReady(false);
+			c.sendReadyStatus(new ReadyStatus(0, clients.size(), levelName));
+		}
+	}
+
+	public synchronized void setReady(Socket client, String isReady) {
+
+		if (getNumOfRats() <= 1) {
+			getClientOutputByClient(client).sendLevelNameMessage("Please add more rat spawns to the level.");
+		} else if (maxRats <= getNumOfRats()) {
+			getClientOutputByClient(client).sendLevelNameMessage("Please fix level settings before saving.");
+		} else if (levelName == null || levelName.equals("")) {
+			getClientOutputByClient(client).sendLevelNameMessage("Level name cannot be empty");
+		} else if (levelName.matches(defaultLevelRegex)) {
+			getClientOutputByClient(client).sendLevelNameMessage("Level name cannot be the same as default level");
+		} else {
+			Boolean isReadyBoolean;
+			if (isReady.equals("true")) {
+				isReadyBoolean = true;
+			} else {
+				isReadyBoolean = false;
+			}
+			clients.replace(client, isReadyBoolean);
+
+			int readyPlayers = 0;
+			Set<Socket> temp = clients.keySet();
+
+			for (Socket c : temp) {
+				if (clients.get(c)) {
+					readyPlayers++;
+				}
+			}
+
+			for (EditorServerThreadObjectOutput c : clientsObjectsOutputs) {
+				if (c.getClient().equals(client)) {
+					c.setReady(isReadyBoolean);
+				}
+				c.sendReadyStatus(new ReadyStatus(readyPlayers, clients.size(), levelName));
+			}
+
+			if (!clients.containsValue(false)) {
+				for (EditorServerThreadObjectOutput c : clientsObjectsOutputs) {
+					c.sendReadyStatus(new ReadyStatus(readyPlayers, clients.size(), levelName, true));
+				}
+
+				for (Socket c : clients.keySet()) {
+					try {
+						c.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+
+				this.saveLevel();
+
+			}
+		}
+	}
+
 	public synchronized void addClient(Socket client) throws IOException {
+		clients.put(client, false);
 		EditorServerThreadObjectOutput clientOutput = new EditorServerThreadObjectOutput(this, client);
 		EditorServerThreadInput clientInput = new EditorServerThreadInput(this, client);
 
@@ -257,16 +326,17 @@ public class EditorServer implements Controller, ServerInterface {
 
 		System.out.println("new threads");
 
-		Thread clientOutputThread = new Thread(clientOutput);
 		Thread clientInputThread = new Thread(clientInput);
+		
+		clientsInputsThreads.add(clientInputThread);
 
-		clientOutputThread.start();
 		clientInputThread.start();
 
 		counterOfClients++;
 		if (counterOfClients == 1) {
 			runTheGame();
 		}
+		this.setAllNotReady();
 	}
 
 	/**
@@ -614,6 +684,8 @@ public class EditorServer implements Controller, ServerInterface {
 				}
 			}
 		}
+
+		this.setAllNotReady();
 		for (EditorServerThreadObjectOutput est : clientsObjectsOutputs) {
 			est.sendMap();
 		}
@@ -716,6 +788,7 @@ public class EditorServer implements Controller, ServerInterface {
 				}
 			}
 
+			this.setAllNotReady();
 			for (EditorServerThreadObjectOutput est : clientsObjectsOutputs) {
 				est.sendSettings(new Settings(maxRats, parTime, dropRates));
 			}
@@ -856,39 +929,86 @@ public class EditorServer implements Controller, ServerInterface {
 	 */
 	@FXML
 	public void saveLevel() {
-		String newLevelName = levelNameTextField.getText();
-		if (newLevelName.contains(" ")) {
-			savingErrorText.setText("Level name cannot contain spaces");
-		} else if (newLevelName.matches(defaultLevelRegex)) {
-			savingErrorText.setText("Level name cannot be the same as default level");
-		} else if (newLevelName.length() == 0) {
-			savingErrorText.setText("Level name cannot be empty");
+//		String newLevelName = levelNameTextField.getText();
+//		savingErrorText.setText("");
+
+		changeToBabyRats();
+		for (int i = 0; i < dropRates.length; i++) {
+			dropRates[i] = dropRates[i] * MILLIS_RATIO;
+		}
+
+		SaveCustomLevel save = new SaveCustomLevel("src\\main\\resources\\server_levels\\created_levels\\" + levelName,
+				width, height, tileMap, maxRats, parTime, dropRates);
+
+//		makeScreenShot(levelName);
+		System.out.println("Screenshot was saved");
+		
+		for (EditorServerThreadObjectOutput e : clientsObjectsOutputs) {
+			e.closeStream();
+		}
+		for (Thread e : clientsInputsThreads) {
+			e.interrupt();
+		}
+		
+		try {
+			editorServer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		boolean isDefault = selectedEditLevelName.matches(defaultLevelRegex);
+		if (isDefault) {
+			server.addNewGameServer(levelName);
 		} else {
-			savingErrorText.setText("");
+			server.restartGameServer(selectedEditLevelName, "created", "editor");
+		}
+		server.restartGameServer(selectedEditLevelName, "default", "editor");
 
-			changeToBabyRats();
-			for (int i = 0; i < dropRates.length; i++) {
-				dropRates[i] = dropRates[i] * MILLIS_RATIO;
-			}
+	}
 
-			SaveCustomLevel save = new SaveCustomLevel("src\\main\\resources\\levels\\created_levels\\" + newLevelName,
-					width, height, tileMap, maxRats, parTime, dropRates);
-
-			if (save.wasSaved()) {
-				makeScreenShot(newLevelName);
-				System.out.println("Screenshot was saved");
-
-				HighScores.createNewLevel(newLevelName);
-				ProfileFileReader.createNewLevel(newLevelName);
-				MAIN_MENU.finishLevel();
-			} else {
-				savingErrorText.setText("Level name already exists.");
-				changeToAdultRats();
-				for (int i = 0; i < dropRates.length; i++) {
-					dropRates[i] = dropRates[i] / MILLIS_RATIO;
-				}
+	public void changeName(Socket client, String[] inputs) {
+		System.out.println("    change menu function is called. : " + inputs);
+		if (inputs.length > 2) {
+			getClientOutputByClient(client).sendLevelNameMessage("Level name cannot contain spaces");
+		} else if (inputs.length == 1) {
+			getClientOutputByClient(client).sendLevelNameMessage("Level name cannot be empty");
+		} else if (inputs[1].matches(defaultLevelRegex)) {
+			getClientOutputByClient(client).sendLevelNameMessage("Level name cannot be the same as default level");
+		} else if (doesLevelExist(inputs[1])) {
+			getClientOutputByClient(client).sendLevelNameMessage("Level name already exist");
+		} else {
+			levelName = inputs[1];
+			this.setAllNotReady();
+			for (EditorServerThreadObjectOutput est : clientsObjectsOutputs) {
+				est.sendLevelNameMessage(levelName);
 			}
 		}
+	}
+
+	private boolean doesLevelExist(String levelName) {
+		File directoryPath = new File("src/main/resources/server_levels/created_levels");
+		// System.out.println(directoryPath.getAbsolutePath());
+
+		// List of all files and directories
+		String[] contents = directoryPath.list();
+
+		assert contents != null;
+		for (String content : contents) {
+			String substring = content.substring(0, content.length() - 4);
+			if (substring.equals(levelName)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private EditorServerThreadObjectOutput getClientOutputByClient(Socket client) {
+		for (EditorServerThreadObjectOutput c : clientsObjectsOutputs) {
+			if (c.getClient().equals(client)) {
+				return c;
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -952,4 +1072,5 @@ public class EditorServer implements Controller, ServerInterface {
 		// TODO Auto-generated method stub
 
 	}
+
 }

@@ -34,7 +34,8 @@ public class ServerListener implements Runnable {
 					outObject.writeObject(new LevelNamesObject(server.getDefaultLevelsNames(), true));
 					break;
 				case "portRequest":
-					outObject.writeObject(Integer.valueOf(server.getPortOfGameServer(inputs[1])));
+					// Syntax must follow: "portRequest <levelName> <levelType> <serverType>"
+					outObject.writeObject(Integer.valueOf(server.getPortOfGameServer(inputs[1], inputs[2], inputs[3])));
 					break;
 				}
 				outObject.reset();

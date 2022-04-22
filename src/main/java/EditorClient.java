@@ -13,9 +13,12 @@ import java.util.Arrays;
 
 import javax.imageio.ImageIO;
 
+import javafx.animation.FadeTransition;
 import javafx.embed.swing.SwingFXUtils;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.canvas.Canvas;
@@ -36,12 +39,14 @@ import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 public class EditorClient implements Controller {
 	private static final String SERVER_IP = "127.0.0.1";
 	private static final int SERVER_PORT = Menu.SERVER_PORT;
 	private EditorClientListener clientListener;
 	private EditorClientOutput clientOutput;
+	private boolean isReady = false;
 
 	// Size of one tile in pixels
 	private static final int TILE_SIZE = 64;
@@ -79,6 +84,8 @@ public class EditorClient implements Controller {
 
 	public TextField widthTextField;
 	public TextField heightTextField;
+	public Text widthText;
+	public Text heightText;
 	public Text sizeChangeErrorText;
 
 	public Pane settingsDialoguePane;
@@ -100,12 +107,17 @@ public class EditorClient implements Controller {
 
 	public Pane saveLevelPane;
 	public TextField levelNameTextField;
+	public Text levelNameText;
 	public Text savingErrorText;
 
 	public Button sizeChangeButton;
 	public Button levelSettingsButton;
 	public Button saveLevelButton;
 	public Button saveAndExitButton;
+
+	@FXML
+	public Button readyButton;
+	public Text readyPlayersText;
 
 	// Level map
 	private Tile[][] tileMap = new Tile[0][0];
@@ -116,11 +128,11 @@ public class EditorClient implements Controller {
 		FXMLLoader loader = new FXMLLoader(getClass().getResource("editorClient.fxml"));
 
 		if (isDefaultLevel) {
-			LevelFileReader.loadNormalLevelFile(this, "src/main/resources/levels/default_levels/" + selectedEditLevelName,
-					true);
+			LevelFileReader.loadNormalLevelFile(this,
+					"src/main/resources/levels/default_levels/" + selectedEditLevelName, true);
 		} else {
-			LevelFileReader.loadNormalLevelFile(this, "src/main/resources/levels/created_levels/" + selectedEditLevelName,
-					true);
+			LevelFileReader.loadNormalLevelFile(this,
+					"src/main/resources/levels/created_levels/" + selectedEditLevelName, true);
 		}
 
 		loader.setController(this);
@@ -147,8 +159,8 @@ public class EditorClient implements Controller {
 		this.tileMap = tileMap.clone();
 		this.width = tileMap.length;
 		this.height = tileMap[0].length;
-		widthTextField.setText(String.valueOf(width));
-		heightTextField.setText(String.valueOf(height));
+		widthText.setText(String.valueOf(width));
+		heightText.setText(String.valueOf(height));
 		System.out.println("Tile map changed");
 		renderBoard();
 	}
@@ -193,7 +205,7 @@ public class EditorClient implements Controller {
 		height = LevelFileReader.getHeight();
 
 		tileMap = LevelFileReader.getTileMap();
-		changeToAdultRats();
+		//changeToAdultRats();
 
 		maxRats = LevelFileReader.getMaxRats();
 		parTime = LevelFileReader.getParTime();
@@ -213,8 +225,8 @@ public class EditorClient implements Controller {
 		setupCanvasDrawing();
 		setupCanvasDragBehaviour();
 
-		heightTextField.setText(String.valueOf(height));
-		widthTextField.setText(String.valueOf(width));
+		heightText.setText(String.valueOf(height));
+		widthText.setText(String.valueOf(width));
 
 		powerTextFields = new TextField[] { bombTextField, gasTextField, sterilizationTextField, poisonTextField,
 				maleSwapTextField, femaleSwapTextField, stopSignTextField, deathRatTextField };
@@ -224,7 +236,7 @@ public class EditorClient implements Controller {
 
 		maxRatTextField.setText(String.valueOf(maxRats));
 		gameTimerTextField.setText(String.valueOf(parTime));
-		levelNameTextField.setText(levelName);
+		levelNameText.setText(levelName);
 	}
 
 	/**
@@ -500,6 +512,21 @@ public class EditorClient implements Controller {
 		clientOutput.changeLevelSize(newWidth, newHeight);
 	}
 
+	public void requestChangeLevelName() {
+		String newName = levelNameTextField.getText();
+
+		clientOutput.changeLevelName(newName);
+	}
+
+	public void changeLevelName(String levelNameMessage) {
+		if (levelNameMessage.contains(" ")) {
+			sizeChangeErrorText.setText(levelNameMessage);
+			this.applyFadingEffect(sizeChangeErrorText);
+		} else {
+			levelNameText.setText(levelNameMessage);
+		}
+	}
+
 	/**
 	 * Changes level size once "Apply Changes" is pressed. Unless invalid input, in
 	 * which case it prompts the user to change their input.
@@ -512,12 +539,14 @@ public class EditorClient implements Controller {
 			if (newWidth > (levelCanvas.getWidth() / TILE_SIZE) || newWidth < 3
 					|| newHeight > (levelCanvas.getHeight() / TILE_SIZE) || newHeight < 3) {
 				sizeChangeErrorText.setText("Maximum map size: 16x14");
+				this.applyFadingEffect(sizeChangeErrorText);
 			} else {
 				sizeChangeErrorText.setText("");
 				requestChangeLevelSize();
 			}
 		} catch (NumberFormatException nfe) {
 			sizeChangeErrorText.setText("Please enter an integer number");
+			this.applyFadingEffect(sizeChangeErrorText);
 		}
 	}
 
@@ -554,7 +583,7 @@ public class EditorClient implements Controller {
 		for (int i = 0; i < settings.getDropRates().length; i++) {
 			powerTextFields[i].setText(String.valueOf(settings.getDropRate(i)));
 		}
-		
+
 		maxRats = settings.getMaxRats();
 		parTime = settings.getParTime();
 		for (int i = 0; i < dropRates.length; i++) {
@@ -592,18 +621,20 @@ public class EditorClient implements Controller {
 				setButtonDisabling(false);
 				clientOutput.saveSettings(maxRatsLocal, parTimeLocal, dropRatesLocal);
 			}
+			this.applyFadingEffect(settingsErrorText);
 		} catch (NumberFormatException nfe) {
 			settingsErrorText.setText("Please enter integer numbers only.");
+			this.applyFadingEffect(settingsErrorText);
 		}
 	}
-	
+
 	public void closeSettings() {
 		settingsErrorText.setText("");
 		settingsDialoguePane.setVisible(false);
 		setupCanvasDrawing();
 		setupCanvasDragBehaviour();
 		setButtonDisabling(false);
-		
+
 		maxRatTextField.setText(String.valueOf(maxRats));
 		gameTimerTextField.setText(String.valueOf(parTime));
 		for (int i = 0; i < dropRates.length; i++) {
@@ -700,10 +731,12 @@ public class EditorClient implements Controller {
 						tileMap[i][j].addOccupantRat(new AdultMale(this, 6, Rat.Direction.NORTH, 0, i, j, true));
 					} else if (rat.getRatSex() == Rat.Sex.FEMALE) {
 						tileMap[i][j].removeOccupantRat(rat);
-						tileMap[i][j].addOccupantRat(new AdultFemale(this, 6, Rat.Direction.NORTH, 0, i, j, true, 0, 0));
+						tileMap[i][j]
+								.addOccupantRat(new AdultFemale(this, 6, Rat.Direction.NORTH, 0, i, j, true, 0, 0));
 					} else if (rat.getRatSex() == Rat.Sex.INTERSEX) {
 						tileMap[i][j].removeOccupantRat(rat);
-						tileMap[i][j].addOccupantRat(new AdultIntersex(this, 6, Rat.Direction.NORTH, 0, i, j, true, 0, 0));
+						tileMap[i][j]
+								.addOccupantRat(new AdultIntersex(this, 6, Rat.Direction.NORTH, 0, i, j, true, 0, 0));
 					}
 				}
 			}
@@ -720,12 +753,12 @@ public class EditorClient implements Controller {
 					Rat rat = tileMap[i][j].getOccupantRats().get(0);
 					if (rat instanceof AdultMale) {
 						tileMap[i][j].removeOccupantRat(rat);
-						tileMap[i][j]
-								.addOccupantRat(new ChildRat(this, 4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.MALE));
+						tileMap[i][j].addOccupantRat(
+								new ChildRat(this, 4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.MALE));
 					} else if (rat instanceof AdultFemale) {
 						tileMap[i][j].removeOccupantRat(rat);
-						tileMap[i][j]
-								.addOccupantRat(new ChildRat(this, 4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.FEMALE));
+						tileMap[i][j].addOccupantRat(
+								new ChildRat(this, 4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.FEMALE));
 					} else if (rat instanceof AdultIntersex) {
 						tileMap[i][j].removeOccupantRat(rat);
 						tileMap[i][j].addOccupantRat(
@@ -791,50 +824,79 @@ public class EditorClient implements Controller {
 		try {
 			ImageIO.write(SwingFXUtils.fromFXImage(writableImage, null), "png", file);
 		} catch (Throwable th) {
-			// TODO: handle this exception
 		}
 
 	}
 
 	@Override
 	public Tile getTileAt(int x, int y) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public void ratKilled(Rat rat) {
-		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void ratAdded(Rat rat) {
-		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void ratRemoved(Rat rat) {
-		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public int[] getCounters() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public int getCurrentTimeLeft() {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 
 	@Override
 	public void addPowersFromSave(int[] inProgInv) {
-		// TODO Auto-generated method stub
-		
+
+	}
+
+	@FXML
+	void readyButtonAction(ActionEvent event) {
+		clientOutput.setReady(!isReady);
+	}
+
+	public void setReady(Boolean temp) {
+		isReady = temp;
+		if (temp) {
+			readyButton.setStyle("-fx-background-image: url('gui/red-menu-button1.png')");
+			readyButton.setText("Cancel");
+		} else {
+			readyButton.setStyle("-fx-background-image: url('gui/green-editor-button.png')");
+			readyButton.setText("I'm ready");
+		}
+	}
+
+	public void setReadyStatus(ReadyStatus temp) {
+		readyPlayersText.setText(temp.getReadyPlayers() + "/" + temp.getAllPlayers());
+		levelNameText.setText(temp.getLevelName());
+		if (temp.isGameFinished()) {
+			sizeChangeErrorText.setText("Game is saving");
+			try {
+				Thread.sleep(2000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			MAIN_MENU.finishLevel();
+		}
+	}
+	
+	private void applyFadingEffect(Node node) {
+		FadeTransition ft = new FadeTransition(Duration.millis(3000), node);
+		ft.setFromValue(1.0);
+		ft.setToValue(0.0);
+		ft.play();
 	}
 }

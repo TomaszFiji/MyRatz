@@ -6,8 +6,10 @@ import java.util.ArrayList;
 
 public class Client {
 	private PrintWriter out;
-	private ArrayList<String> createdLevelsNames = new ArrayList<>();
-	private ArrayList<String> defaultLevelsNames = new ArrayList<>();
+//	private ArrayList<String> createdLevelsNames = new ArrayList<>();
+//	private ArrayList<String> defaultLevelsNames = new ArrayList<>();
+	private SynchronizedLevelNames defaultLevelsNames = new SynchronizedLevelNames();
+	private SynchronizedLevelNames createdLevelsNames = new SynchronizedLevelNames();
 	private boolean wiatingForCreatedData = false;
 	private boolean wiatingForDefaultData = false;
 	private ClientObjectListener clientObjectListener;
@@ -23,22 +25,18 @@ public class Client {
 		clientObjectListenerThread.start();
 
 		System.out.println("test3");
-		defaultLevelsNames.add("level-1");
+//		defaultLevelsNames.add("level-1");
 		System.out.println(out == null);
 		System.out.println(server.getLocalPort() + " connected" + server.getPort());
 
 	}
 
 	public synchronized void updateCreatedLevelsNames(ArrayList<String> createdLevelsNames) {
-		this.createdLevelsNames = createdLevelsNames;
-		wiatingForCreatedData = false;
-//		notifyAll();
+		this.createdLevelsNames.setLevelsNames(createdLevelsNames);
 	}
 
 	public synchronized void updateDefaultLevelsNames(ArrayList<String> defaultLevelsNames) {
-		this.defaultLevelsNames = defaultLevelsNames;
-		wiatingForDefaultData = false;
-//		notifyAll();
+		this.defaultLevelsNames.setLevelsNames(defaultLevelsNames);
 	}
 
 	private void askForCreatedLevelsNames() {
@@ -51,22 +49,13 @@ public class Client {
 	}
 
 	public ArrayList<String> getCreatedLevelsNames() throws InterruptedException {
-		wiatingForCreatedData = true;
-		askForCreatedLevelsNames();
-
-		Thread.sleep(1000);
-
-		System.out.println("client: asking for crelev finish" + createdLevelsNames.get(0));
-		return createdLevelsNames;
+		this.askForCreatedLevelsNames();
+		return createdLevelsNames.getLevelsNames();
 	}
 
 	public ArrayList<String> getDefaultLevelsNames() throws InterruptedException {
-		wiatingForDefaultData = true;
-		System.out.println("client: asking for deflev start");
-		askForDefaultLevelsNames();
-		Thread.sleep(1000);
-		System.out.println("client: asking for deflev finish" + defaultLevelsNames.get(0));
-		return defaultLevelsNames;
+		this.askForDefaultLevelsNames();
+		return defaultLevelsNames.getLevelsNames();
 	}
 
 	public synchronized void updatePort(Integer port) {
@@ -74,8 +63,8 @@ public class Client {
 		notifyAll();
 	}
 
-	public synchronized int getPort(String clientSelectedLevelName) throws InterruptedException {
-		out.println("portRequest " + clientSelectedLevelName);
+	public synchronized int getPort(String clientLevelData) throws InterruptedException {
+		out.println("portRequest " + clientLevelData);
 		wait();
 		return port;
 	}

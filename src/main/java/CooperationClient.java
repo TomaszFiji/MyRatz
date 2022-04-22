@@ -156,7 +156,7 @@ public class CooperationClient implements Controller {
 	}
 
 	public void runClient(int port) throws IOException, ClassNotFoundException, InterruptedException {
-		server = new Socket(SERVER_IP, Menu.SERVER_PORT);
+		server = new Socket(SERVER_IP, port);
 		clientListener = new CooperationClientListener(this, server);
 		clientOutput = new CooperationClientOutput(this, server);
 		Thread clientListenerThread = new Thread(clientListener);

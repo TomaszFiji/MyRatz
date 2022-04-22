@@ -1,9 +1,9 @@
 import java.io.Serializable;
 
-public class Settings implements Serializable{
+public class Settings implements Serializable {
 	private int maxRats;
 	private int parTime;
-	int[] dropRates = new int[8];
+	private int[] dropRates = new int[8];
 
 	public Settings(int maxRats, int parTime, int[] dropRates) {
 		this.maxRats = maxRats;

@@ -628,10 +628,12 @@ public class MenuController {
 
 		if (defaultLevelsRadioButton.isSelected()) {
 			levelType = "default_levels/";
-			LevelFileReader.loadNormalLevelFile(null, "src/main/resources/levels/" + levelType + selectedLevelName, true);
+			LevelFileReader.loadNormalLevelFile(null, "src/main/resources/levels/" + levelType + selectedLevelName,
+					true);
 		} else if (createdLevelsRadioButton.isSelected()) {
 			levelType = "created_levels/";
-			LevelFileReader.loadNormalLevelFile(null, "src/main/resources/levels/" + levelType + selectedLevelName, true);
+			LevelFileReader.loadNormalLevelFile(null, "src/main/resources/levels/" + levelType + selectedLevelName,
+					true);
 		} else if (savedGamesRadioButton.isSelected()) {
 			levelType = "saved_games/" + ProfileFileReader.getLoggedProfile() + "/";
 			LevelFileReader.loadSavedLevelFile(null, "src/main/resources/levels/" + levelType + selectedLevelName);
@@ -732,11 +734,11 @@ public class MenuController {
 		FXMLLoader loader = new FXMLLoader(getClass().getResource("editor.fxml"));
 
 		if (editDefaultLevelsRadioButton.isSelected()) {
-			LevelFileReader.loadNormalLevelFile(null, "src/main/resources/levels/default_levels/" + selectedEditLevelName,
-					true);
+			LevelFileReader.loadNormalLevelFile(null,
+					"src/main/resources/levels/default_levels/" + selectedEditLevelName, true);
 		} else if (editCustomLevelsRadioButton.isSelected()) {
-			LevelFileReader.loadNormalLevelFile(null, "src/main/resources/levels/created_levels/" + selectedEditLevelName,
-					true);
+			LevelFileReader.loadNormalLevelFile(null,
+					"src/main/resources/levels/created_levels/" + selectedEditLevelName, true);
 		}
 		EditorController editorController = new EditorController(selectedEditLevelName, this);
 
@@ -817,17 +819,17 @@ public class MenuController {
 	public void runServer(ActionEvent event) throws IOException {
 		System.out.println("move to server");
 
-//		root = FXMLLoader.load(getClass().getResource("serverRunningScene.fxml"));
-//		stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-//		scene = new Scene(root);
-//		stage.setScene(scene);
-//		stage.show();
+		root = FXMLLoader.load(getClass().getResource("serverRunningScene.fxml"));
+		stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+		scene = new Scene(root);
+		stage.setScene(scene);
+		stage.show();
 
-		System.out.println("run server");
-		changeToMenu(event);
-		CooperationServer s = new CooperationServer("level-3",this, scene, stage);
-		//s.runTheGame();
-		s.runServer();
+//		System.out.println("run server");
+//		changeToMenu(event);
+//		CooperationServer s = new CooperationServer("level-3",this, scene, stage);
+//		//s.runTheGame();
+//		s.runServer();
 	}
 
 	private void updateServerView() throws IOException {
@@ -835,6 +837,11 @@ public class MenuController {
 		serverIPLabel.setText(InetAddress.getLocalHost().getHostAddress());
 		serverPortLabel.setText(Integer.toString(server.getPort()));
 //		serverViewUpdated = true;
+	}
+	
+	public void finishServerGame(String levelName, String baseLevelName, String levelType, String serverType) {
+		server.restartGameServer(baseLevelName, levelType, serverType);
+		server.addNewGameServer(levelName);
 	}
 
 	public void closeServer(ActionEvent event) throws IOException {
@@ -851,16 +858,16 @@ public class MenuController {
 	public void runClient(ActionEvent event) throws IOException, ClassNotFoundException, InterruptedException {
 		System.out.println("move to search for server");
 		// serverViewUpdated = false;
-//		root = FXMLLoader.load(getClass().getResource("clientSearchingForServer.fxml"));
-//		stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-//		scene = new Scene(root);
-//		stage.setScene(scene);
-//		stage.show();
-		System.out.println("run client edfsfs");
-		changeToMenu(event);
-		CooperationClient c = new CooperationClient("level-3", this, scene, stage);
-		c.runTheGame("level-3", true, scene, stage, this);
-		c.runClient(0);
+		root = FXMLLoader.load(getClass().getResource("clientSearchingForServer.fxml"));
+		stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+		scene = new Scene(root);
+		stage.setScene(scene);
+		stage.show();
+//		System.out.println("run client edfsfs");
+//		changeToMenu(event);
+//		CooperationClient c = new CooperationClient("level-3", this, scene, stage);
+//		c.runTheGame("level-3", true, scene, stage, this);
+//		c.runClient(0);
 	}
 
 	@FXML
@@ -912,6 +919,7 @@ public class MenuController {
 
 		// Checking which radio button is selected
 		// to choose type of levels to display
+		System.out.println("Asking for level names");
 		if (defaultLevelsClientRadioButton.isSelected()) {
 
 			// TODO : implement these methods
@@ -981,13 +989,34 @@ public class MenuController {
 
 	@FXML
 	void playTheGameClient(ActionEvent event) throws IOException, ClassNotFoundException, InterruptedException {
+		String temp = clientSelectedLevelName;
+		if (defaultLevelsClientRadioButton.isSelected()) {
+			temp += " default";
+		} else if (createdLevelsClientRadioButton.isSelected()) {
+			temp += " created";
+		}
 
-		int port = client.getPort(clientSelectedLevelName);
+		if (cooperationClientRadioButton.isSelected()) {
+			temp += " cooperation";
+		} else if (sabotageClientRadioButton.isSelected()) {
+			temp += " sabotage";
+		} else if (mapCreationClientRadioButton.isSelected()) {
+			temp += " editor";
+		}
+		int port = client.getPort(temp);
 		System.out.println("run client " + port);
-		// changeToMenu(event);
-		EditorClient c = new EditorClient(this);
-		c.runTheGame("level-3", true, scene, stage, this);
-		c.runClient(port);
+
+		if (cooperationClientRadioButton.isSelected()) {
+			CooperationClient c = new CooperationClient(clientSelectedLevelName, this, scene, stage);
+			c.runTheGame("level-3", true, scene, stage, this);
+			c.runClient(port);
+		} else if (sabotageClientRadioButton.isSelected()) {
+			System.out.println("Not yest implemented");
+		} else if (mapCreationClientRadioButton.isSelected()) {
+			EditorClient c = new EditorClient(this);
+			c.runTheGame("level-3", true, scene, stage, this);
+			c.runClient(port);
+		}
 	}
 
 	@FXML

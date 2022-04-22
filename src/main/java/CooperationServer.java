@@ -158,7 +158,7 @@ public class CooperationServer implements Controller, ServerInterface, Serializa
 	}
 
 	public void runServer() throws IOException {
-		cooperationServer = new ServerSocket(Menu.SERVER_PORT);
+		cooperationServer = new ServerSocket(0);
 		System.out.println(cooperationServer.getLocalSocketAddress() + " " + InetAddress.getLocalHost().getHostAddress()
 				+ " " + cooperationServer.getLocalPort());
 		this.port = cooperationServer.getLocalPort();
@@ -219,7 +219,7 @@ public class CooperationServer implements Controller, ServerInterface, Serializa
 		FXMLLoader loader = new FXMLLoader(getClass().getResource("level.fxml"));
 
 //		LevelFileReader.setControlller(this);
-		LevelFileReader.loadNormalLevelFile(this, "src/main/resources/levels/default_levels/" + LEVEL_NAME, true);
+		LevelFileReader.loadNormalLevelFile(this, "src/main/resources/server_levels/default_levels/" + LEVEL_NAME, true);
 
 		WIDTH = LevelFileReader.getWidth();
 		HEIGHT = LevelFileReader.getHeight();
@@ -238,8 +238,8 @@ public class CooperationServer implements Controller, ServerInterface, Serializa
 		Pane root = loader.load();
 
 		scene = new Scene(root, root.getPrefWidth(), root.getPrefHeight());
-		stage.setScene(scene);
-		stage.show();
+//		stage.setScene(scene);
+//		stage.show();
 		System.out.println("finished runing the game server");
 
 		currentTimeLeft = PAR_TIME * 1000;
@@ -837,5 +837,13 @@ public class CooperationServer implements Controller, ServerInterface, Serializa
 			score += 10;
 			otherRatCounter--;
 		}
+	}
+
+	public String getLevelName() {
+		return LEVEL_NAME;
+	}
+
+	public int getPort() {
+		return cooperationServer.getLocalPort();
 	}
 }
