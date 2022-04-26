@@ -47,7 +47,6 @@ public class CooperationServerThreadObjectOutput implements Runnable {
 			outObject.writeObject(temp);
 			outObject.reset();
 			System.gc();
-//			System.out.println("Sending time and counters finished");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -123,24 +122,5 @@ public class CooperationServerThreadObjectOutput implements Runnable {
 			}
 		}
 		return temp;
-	}
-
-	private Tile[][] removeControllerFromMap(Tile[][] tileMap) {
-		Tile[][] tempTileMap = tileMap.clone();
-//		System.out.println(tileMap + " " + tempTileMap + " " + (tileMap == tempTileMap));
-		for (Tile[] tileList : tempTileMap) {
-			for (Tile t : tileList) {
-				t.setController(null);
-
-				for (Power p : t.getActivePowers()) {
-					p.setController(null);
-				}
-
-				for (Rat r : t.getOccupantRats()) {
-					r.setController(null);
-				}
-			}
-		}
-		return tempTileMap;
 	}
 }

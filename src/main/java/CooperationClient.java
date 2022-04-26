@@ -31,8 +31,10 @@ import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
@@ -45,6 +47,8 @@ public class CooperationClient implements Controller {
 	private int[] counters = new int[ITEM_NUM];
 
 	private static final String defaultLevelRegex = "level-[1-5]";
+	
+	private boolean gameStarted = false;
 
 	// For sounds
 	private static final String DEATH_RAT_SOUND_1_PATH = "deathRatSound1.mp3";
@@ -112,6 +116,8 @@ public class CooperationClient implements Controller {
 	public HBox femaleSwapToolbar;
 	public HBox stopSignToolbar;
 	public HBox deathRatToolbar;
+	public VBox waitingRoot;
+	public BorderPane gameplayRoot;
 
 	public Label timerLabel;
 	public Label femaleRatCounterLabel;
@@ -168,6 +174,14 @@ public class CooperationClient implements Controller {
 	}
 
 	public void setTileMap(Tile[][] tileMap) {
+		if(!gameStarted) {
+			waitingRoot.setDisable(true);
+			waitingRoot.setVisible(false);
+			gameplayRoot.setDisable(false);
+			gameplayRoot.setVisible(true);
+			gameplayRoot.setOpacity(1);
+			
+		}
 		this.tileMap = tileMap;
 		this.renderGame();
 	}
@@ -179,7 +193,7 @@ public class CooperationClient implements Controller {
 	public void runTheGame(String selectedEditLevelName, boolean isDefaultLevel, Scene scene, Stage stage,
 			MenuController menu) throws IOException {
 
-		FXMLLoader loader = new FXMLLoader(getClass().getResource("level.fxml"));
+		FXMLLoader loader = new FXMLLoader(getClass().getResource("clientLevel.fxml"));
 
 		if (isDefaultLevel) {
 			LevelFileReader.loadNormalLevelFile(this,
@@ -369,6 +383,27 @@ public class CooperationClient implements Controller {
 		femaleRatCounterLabel.setText(temp.getFemaleRatCounter());
 		ratCounterLabel.setText(temp.getRatCounter());
 		timerLabel.setText(temp.getTimeLeft());
+		if (temp.isGameEnd()) {
+			disableToolbars();
+			saveLevelStateButton.setDisable(true);
+
+			gameEndPane.setVisible(true);
+			saveAndExitButton.setVisible(false);
+
+			if (temp.isGameWon()) {
+				score += currentTimeLeft / 1000;
+				gamePaneText.getChildren().add(new Text("You've won! :)"));
+				gamePaneScore.getChildren().add(new Text("Score: " + score));
+			} else {
+				gamePaneText.getChildren().add(new Text("You've lost! :("));
+			}
+			
+			String[] highScores = HighScores.getTopScores(LEVEL_NAME);
+			for (String text : highScores) {
+				gamePaneLeaderboard.getChildren().add(new Text(text + "\n"));
+			}
+			
+		}
 	}
 
 	/**

@@ -158,36 +158,25 @@
                </children>
             </HBox>
              </Pane>
-           <Pane fx:id="saveLevelPane" layoutX="295.0" layoutY="310.0" prefHeight="300.0" prefWidth="450.0" styleClass="savingDialogueBox" visible="false">
-              <Text layoutX="150.0" layoutY="45.0" strokeType="OUTSIDE" strokeWidth="0.0" styleClass="dialogueTitle" text="Save Level" />
-              <Text layoutX="30.0" layoutY="80.0" strokeType="OUTSIDE" strokeWidth="0.0" styleClass="sideBarText" text="Level name:" />
-              <TextField fx:id="levelNameTextField" layoutX="30.0" layoutY="100.0" prefWidth="300.0">
-                 <font>
-                    <Font size="18.0" />
-                 </font>
-              </TextField>
-              <TextFlow layoutX="30.0" layoutY="170.0" prefHeight="40.0" prefWidth="380.0" styleClass="sideBarText">
-                 <Text fx:id="savingErrorText" strokeType="OUTSIDE" strokeWidth="0.0" styleClass="sideBarText" />
-              </TextFlow>
-              <Button layoutX="30.0" layoutY="245.0" mnemonicParsing="false" onAction="#goBackToEditor" prefHeight="36.0" prefWidth="187.0" styleClass="sideBarButton" text="Go Back" />
-              <Button fx:id="saveAndExitButton" layoutX="235.0" layoutY="245.0" mnemonicParsing="false" onAction="#saveLevel" prefHeight="36.0" prefWidth="187.0" styleClass="sideBarButton" text="Save &amp; Exit" />
-           </Pane>
 		</Pane>
 	</center>
 	<right>
 		<BorderPane prefHeight="200.0" prefWidth="300.0" styleClass="sidebar" stylesheets="@editor.css" BorderPane.alignment="CENTER">
-			<bottom>
-				<Button fx:id="saveLevelButton" mnemonicParsing="false" onAction="#openSavingDialogueBox" prefHeight="36.0" prefWidth="187.0" styleClass="sideBarButton" text="Save Level" BorderPane.alignment="BOTTOM_CENTER">
-					<BorderPane.margin>
-						<Insets bottom="20.0" top="10.0" />
-					</BorderPane.margin>
-				</Button>
-			</bottom>
          <top>
             <VBox BorderPane.alignment="CENTER">
                <BorderPane.margin>
                   <Insets left="20.0" right="20.0" top="20.0" />
                </BorderPane.margin>
+               <HBox prefHeight="27.0" prefWidth="260.0" spacing="40.0">
+                  <children>
+                     <Text strokeType="OUTSIDE" strokeWidth="0.0" styleClass="sideBarText" text="Grass:" />
+                     <Text layoutX="10.0" layoutY="29.0" strokeType="OUTSIDE" strokeWidth="0.0" styleClass="sideBarText" text="Path:" />
+                     <Text layoutX="63.0" layoutY="29.0" strokeType="OUTSIDE" strokeWidth="0.0" styleClass="sideBarText" text="Tunnel:" />
+                  </children>
+                  <VBox.margin>
+                     <Insets left="10.0" />
+                  </VBox.margin>
+               </HBox>
                <HBox prefHeight="100.0" prefWidth="200.0">
                   <padding>
                      <Insets top="10.0" />
@@ -207,7 +196,7 @@
             </VBox>
          </top>
          <center>
-            <VBox prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
+            <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" spacing="8.0" BorderPane.alignment="CENTER">
                <padding>
                   <Insets bottom="5.0" left="8.0" right="8.0" top="5.0" />
                </padding>
@@ -222,7 +211,7 @@
                      <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                   </padding>
                </HBox>
-               <VBox alignment="CENTER" prefHeight="297.0" prefWidth="284.0">
+               <VBox alignment="CENTER" prefHeight="313.0" prefWidth="284.0">
                   <HBox prefHeight="70.0" prefWidth="284.0">
                      <VBox.margin>
                         <Insets left="5.0" right="5.0" />
@@ -270,7 +259,7 @@
                   </Button>
                   <TextFlow prefHeight="58.0" prefWidth="284.0" styleClass="sideBarText">
                      <VBox.margin>
-                        <Insets top="10.0" />
+                        <Insets />
                      </VBox.margin>
                      <Text fx:id="sizeChangeErrorText" strokeType="OUTSIDE" strokeWidth="0.0" styleClass="sideBarText" />
                   </TextFlow>
@@ -285,14 +274,23 @@
                         <Insets bottom="5.0" />
                      </VBox.margin>
                   </TextField>
-                  <Button fx:id="sizeChangeButton1" alignment="CENTER" contentDisplay="CENTER" layoutX="59.0" layoutY="97.0" mnemonicParsing="false" onAction="#requestChangeLevelName" prefHeight="36.0" prefWidth="187.0" styleClass="sideBarButton" text="ChangeName" />
+                  <Button fx:id="sizeChangeButton1" alignment="CENTER" contentDisplay="CENTER" layoutX="59.0" layoutY="97.0" mnemonicParsing="false" onAction="#requestChangeLevelName" prefHeight="36.0" prefWidth="187.0" styleClass="sideBarButton" text="ChangeName">
+                     <VBox.margin>
+                        <Insets />
+                     </VBox.margin></Button>
                </VBox>
+               <Button fx:id="levelSettingsButton" mnemonicParsing="false" onAction="#displayLevelSettings" prefHeight="36.0" prefWidth="187.0" styleClass="sideBarButton" text="Level Settings">
+                  <VBox.margin>
+                     <Insets top="15.0" />
+                  </VBox.margin>
+               </Button>
+               <Separator prefHeight="17.0" prefWidth="284.0" visible="false" />
                <VBox alignment="CENTER" prefHeight="78.0" prefWidth="284.0" spacing="5.0">
                   <children>
                      <HBox alignment="CENTER" prefHeight="54.0" prefWidth="284.0">
                         <children>
                            <Text strokeType="OUTSIDE" strokeWidth="0.0" styleClass="sideBarText" text="Ready: " />
-                           <Text fx:id="readyPlayersText" layoutX="125.0" layoutY="61.0" strokeType="OUTSIDE" strokeWidth="0.0" styleClass="sideBarText" text="21/37" />
+                           <Text fx:id="readyPlayersText" layoutX="125.0" layoutY="61.0" strokeType="OUTSIDE" strokeWidth="0.0" styleClass="sideBarText" text="0/0" />
                         </children>
                         <VBox.margin>
                            <Insets top="10.0" />
@@ -301,12 +299,7 @@
                      <Button fx:id="readyButton" alignment="CENTER" contentDisplay="CENTER" mnemonicParsing="false" onAction="#readyButtonAction" prefHeight="36.0" prefWidth="187.0" styleClass="greenSideBarButton" text="I'm Ready" />
                   </children>
                </VBox>
-               <Separator prefHeight="37.0" prefWidth="284.0" />
-               <Button fx:id="levelSettingsButton" mnemonicParsing="false" onAction="#displayLevelSettings" prefHeight="36.0" prefWidth="187.0" styleClass="sideBarButton" text="Level Settings">
-                  <VBox.margin>
-                     <Insets left="50.0" />
-                  </VBox.margin>
-               </Button>
+   				<Button mnemonicParsing="false" onAction="#leave" prefHeight="36.0" prefWidth="187.0" styleClass="sideBarButton" text="Leave" />
             </VBox>
          </center>
 		</BorderPane>

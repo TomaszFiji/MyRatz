@@ -18,6 +18,7 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -87,7 +88,6 @@ public class CooperationServer implements Controller, ServerInterface, Serializa
 	private int[] DROP_RATES;
 	private int[] timeUntilDrop = new int[ITEM_NUM];
 
-	private final MenuController MAIN_MENU;
 	private final String LEVEL_NAME;
 
 	// Milliseconds between frames
@@ -134,8 +134,8 @@ public class CooperationServer implements Controller, ServerInterface, Serializa
 	private ArrayList<CooperationServerThreadObjectOutput> clientsObjectsOutputs = new ArrayList<>();
 	private ArrayList<CooperationServerThreadInput> clientsInputs = new ArrayList<>();
 	private int counterOfClients;
-	private Stage stage;
-	private Scene scene;
+	private boolean isDefaultLevel;
+	private Server server;
 
 	/**
 	 * Constructor for LevelController class.
@@ -143,7 +143,7 @@ public class CooperationServer implements Controller, ServerInterface, Serializa
 	 * @param selectedLevelName  Number of level being played.
 	 * @param mainMenuController Reference to the main menu controller.
 	 */
-	public CooperationServer(String selectedLevelName, MenuController mainMenuController, Scene scene, Stage stage) {
+	public CooperationServer(String selectedLevelName, Server server) {
 
 		/*
 		 * String levelName, MenuController mainMenuController, Scene scene, Stage
@@ -151,16 +151,15 @@ public class CooperationServer implements Controller, ServerInterface, Serializa
 		 * this.selectedEditLevelName = levelName; this.levelName = levelName; MAIN_MENU
 		 * = mainMenuController;
 		 */
-		this.scene = scene;
-		this.stage = stage;
+		this.isDefaultLevel = selectedLevelName.matches(defaultLevelRegex);
 		LEVEL_NAME = selectedLevelName;
-		MAIN_MENU = mainMenuController;
+		this.server = server;
 	}
 
 	public void runServer() throws IOException {
 		cooperationServer = new ServerSocket(0);
 		System.out.println(cooperationServer.getLocalSocketAddress() + " " + InetAddress.getLocalHost().getHostAddress()
-				+ " " + cooperationServer.getLocalPort());
+				+ " " + cooperationServer.getLocalPort() + " " + this.LEVEL_NAME);
 		this.port = cooperationServer.getLocalPort();
 
 		System.out.println("initializing");
@@ -213,13 +212,19 @@ public class CooperationServer implements Controller, ServerInterface, Serializa
 		return tileMap;
 	}
 
-	public void runTheGame() throws IOException {
+	public synchronized void runTheGame() throws IOException {
 		System.out.println("Running the game");
 
 		FXMLLoader loader = new FXMLLoader(getClass().getResource("level.fxml"));
-
-//		LevelFileReader.setControlller(this);
-		LevelFileReader.loadNormalLevelFile(this, "src/main/resources/server_levels/default_levels/" + LEVEL_NAME, true);
+		loader.setController(this);
+		loader.load();
+		if (isDefaultLevel) {
+			LevelFileReader.loadNormalLevelFile(this, "src/main/resources/server_levels/default_levels/" + LEVEL_NAME,
+					true);
+		} else {
+			LevelFileReader.loadNormalLevelFile(this, "src/main/resources/server_levels/created_levels/" + LEVEL_NAME,
+					true);
+		}
 
 		WIDTH = LevelFileReader.getWidth();
 		HEIGHT = LevelFileReader.getHeight();
@@ -234,12 +239,6 @@ public class CooperationServer implements Controller, ServerInterface, Serializa
 		}
 		DROP_RATES = LevelFileReader.getDropRates();
 
-		loader.setController(this);
-		Pane root = loader.load();
-
-		scene = new Scene(root, root.getPrefWidth(), root.getPrefHeight());
-//		stage.setScene(scene);
-//		stage.show();
 		System.out.println("finished runing the game server");
 
 		currentTimeLeft = PAR_TIME * 1000;
@@ -261,10 +260,6 @@ public class CooperationServer implements Controller, ServerInterface, Serializa
 		tickTimeline.setCycleCount(Animation.INDEFINITE);
 		tickTimeline.play();
 
-		// Start the SeaShantySimulator (music player)
-		SeaShantySimulator seaShantySimulator = new SeaShantySimulator();
-		seaShantySimulator.initialize();
-		seaShantySimulator.play();
 	}
 
 	/**
@@ -396,7 +391,7 @@ public class CooperationServer implements Controller, ServerInterface, Serializa
 			TimeAndRatCounters temp = new TimeAndRatCounters(millisToString(currentTimeLeft),
 					String.valueOf(maleRatCounter), String.valueOf(femaleRatCounter),
 					(femaleRatCounter + maleRatCounter + otherRatCounter) + "/" + (MAX_RATS));
-			
+
 			for (CooperationServerThreadObjectOutput est : clientsObjectsOutputs) {
 				System.out.print("counters  ");
 				est.sendTimeAndRatCounters(temp);
@@ -452,35 +447,32 @@ public class CooperationServer implements Controller, ServerInterface, Serializa
 	 * @param wonGame whether level was won.
 	 */
 	private void endGame(boolean wonGame) {
+		System.out.println("end game " + wonGame);
 		tickTimeline.stop();
-		disableToolbars();
-		saveLevelStateButton.setDisable(true);
+		TimeAndRatCounters temp = new TimeAndRatCounters(millisToString(currentTimeLeft),
+				String.valueOf(maleRatCounter), String.valueOf(femaleRatCounter),
+				(femaleRatCounter + maleRatCounter + otherRatCounter) + "/" + (MAX_RATS), true, wonGame);
 
-		gameEndPane.setVisible(true);
-		saveAndExitButton.setVisible(false);
+		for (CooperationServerThreadObjectOutput est : clientsObjectsOutputs) {
+			System.out.print("counters  ");
+			est.sendTimeAndRatCounters(temp);
+		}
 
-		if (wonGame) {
-			score += currentTimeLeft / 1000;
-			gamePaneText.getChildren().add(new Text("You've won! :)"));
-			gamePaneScore.getChildren().add(new Text("Score: " + score));
-			ProfileFileReader.saveScore(ProfileFileReader.getLoggedProfile(), LEVEL_NAME, score);
-			HighScores.saveScore(ProfileFileReader.getLoggedProfile(), LEVEL_NAME, score);
+		boolean isDefault = LEVEL_NAME.matches(defaultLevelRegex);
+		if (isDefault) {
+			server.restartGameServer(LEVEL_NAME, "default", "cooperation");
 		} else {
-			gamePaneText.getChildren().add(new Text("You've lost! :("));
+			server.restartGameServer(LEVEL_NAME, "created", "cooperation");
 		}
+//
+//		if (wonGame) {
+//			score += currentTimeLeft / 1000;
+//			gamePaneText.getChildren().add(new Text("You've won! :)"));
+//			gamePaneScore.getChildren().add(new Text("Score: " + score));
+//		} else {
+//			gamePaneText.getChildren().add(new Text("You've lost! :("));
+//		}
 
-		String[] highScores = HighScores.getTopScores(LEVEL_NAME);
-		for (String text : highScores) {
-			gamePaneLeaderboard.getChildren().add(new Text(text + "\n"));
-		}
-	}
-
-	/**
-	 * Exits level and goes back to main menu.
-	 */
-	@FXML
-	private void exitGame() {
-		MAIN_MENU.finishLevel();
 	}
 
 	/**
@@ -541,7 +533,7 @@ public class CooperationServer implements Controller, ServerInterface, Serializa
 		int x = Integer.valueOf(inputs[2]);
 		int y = Integer.valueOf(inputs[3]);
 		int index = Integer.valueOf(inputs[1]);
-		
+
 		Power power = null;
 		boolean addPower = true;
 		switch (index) {
@@ -567,16 +559,6 @@ public class CooperationServer implements Controller, ServerInterface, Serializa
 			power = new StopSign(this, x, y);
 			break;
 		case 7:
-			SeaShantySimulator seaSim = new SeaShantySimulator();
-			int randomNum = ThreadLocalRandom.current().nextInt(1, 3);
-			if (randomNum == 1) {
-				seaSim.playAudioClip(DEATH_RAT_SOUND_1_PATH, SOUND_VOLUME_RAT);
-			} else if (randomNum == 2) {
-				seaSim.playAudioClip(DEATH_RAT_SOUND_2_PATH, SOUND_VOLUME_RAT);
-			} else {
-				seaSim.playAudioClip(DEATH_RAT_SOUND_3_PATH, SOUND_VOLUME_RAT);
-			}
-
 			tileMap[x][y].addOccupantRat(new DeathRat(this, Rat.getDEFAULT_SPEED(), Rat.Direction.NORTH, 0, x, y, 0));
 			addPower = false;
 			break;
@@ -590,6 +572,7 @@ public class CooperationServer implements Controller, ServerInterface, Serializa
 		counters[index]--;
 		renderItem(index);
 	}
+
 	/**
 	 * Adds item dropped by the player onto a Tile.
 	 *
@@ -625,16 +608,6 @@ public class CooperationServer implements Controller, ServerInterface, Serializa
 			power = new StopSign(this, x, y);
 			break;
 		case 7:
-			SeaShantySimulator seaSim = new SeaShantySimulator();
-			int randomNum = ThreadLocalRandom.current().nextInt(1, 3);
-			if (randomNum == 1) {
-				seaSim.playAudioClip(DEATH_RAT_SOUND_1_PATH, SOUND_VOLUME_RAT);
-			} else if (randomNum == 2) {
-				seaSim.playAudioClip(DEATH_RAT_SOUND_2_PATH, SOUND_VOLUME_RAT);
-			} else {
-				seaSim.playAudioClip(DEATH_RAT_SOUND_3_PATH, SOUND_VOLUME_RAT);
-			}
-
 			tileMap[x][y].addOccupantRat(new DeathRat(this, Rat.getDEFAULT_SPEED(), Rat.Direction.NORTH, 0, x, y, 0));
 			addPower = false;
 			break;
@@ -676,7 +649,6 @@ public class CooperationServer implements Controller, ServerInterface, Serializa
 				e.printStackTrace();
 				savingErrorText.setText("An error occurred saving game state.");
 			}
-			MAIN_MENU.finishLevel();
 		}
 	}
 
@@ -845,5 +817,10 @@ public class CooperationServer implements Controller, ServerInterface, Serializa
 
 	public int getPort() {
 		return cooperationServer.getLocalPort();
+	}
+
+	@FXML
+	void exitGame(ActionEvent event) {
+
 	}
 }

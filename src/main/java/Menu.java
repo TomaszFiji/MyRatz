@@ -43,6 +43,18 @@ public class Menu extends Application {
 			try {
 				ProfileFileReader.saveDataToFile();
 				HighScores.saveDataToFile();
+				try {
+					CooperationClient c = MenuController.getCooperationClient();
+					if (c != null) {
+						// TODO:
+					}
+					EditorClient e = MenuController.getEditorClient();
+					if (e != null) {
+						e.stageClosing();
+					}
+				} catch (Exception e) {
+
+				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

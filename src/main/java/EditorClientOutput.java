@@ -66,4 +66,9 @@ public class EditorClientOutput implements Runnable {
 		System.out.println("Sent: levelName " + newName);
 		out.println("levelName " + newName);
 	}
+	
+	public void stageClosing() {
+		System.out.println("Sent: closing ");
+		out.println("closing");
+	}
 }

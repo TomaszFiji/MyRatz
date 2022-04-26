@@ -1,11 +1,15 @@
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Scanner;
 
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
 public class Server implements ServerInterface {
@@ -33,6 +37,10 @@ public class Server implements ServerInterface {
 		this.createDefaultCooperationServers();
 		this.createCreatedCooperationServers();
 
+		System.out.println(defaultEditorServers.size() + " " + createdEditorServers.size() + " "
+				+ defaultCooperationServers.size() + " " + createdCooperationServers.size() + " "
+				+ defaultLevelsNames.size() + " " + createdLevelsNames.size());
+
 		ServerAcceptances serverAcceptances = new ServerAcceptances(this, serverSocket);
 		Thread serverAcceptancesThread = new Thread(serverAcceptances);
 		serverAcceptancesThread.start();
@@ -59,7 +67,7 @@ public class Server implements ServerInterface {
 				CooperationServer temp = null;
 				for (CooperationServer es : defaultCooperationServers) {
 					if (es.getLevelName().equals(levelName)) {
-						es = new CooperationServer(levelName, menu, scene, stage);
+						es = new CooperationServer(levelName, this);
 						try {
 							es.runServer();
 						} catch (IOException e) {
@@ -100,7 +108,7 @@ public class Server implements ServerInterface {
 			} else if (serverType.equals("cooperation")) {
 				for (CooperationServer es : createdCooperationServers) {
 					if (es.getLevelName().equals(levelName)) {
-						es = new CooperationServer(levelName, menu, scene, stage);
+						es = new CooperationServer(levelName, this);
 						try {
 							es.runServer();
 						} catch (IOException e) {
@@ -115,10 +123,10 @@ public class Server implements ServerInterface {
 	}
 
 	public void addNewGameServer(String levelName) {
-		
+
 		createdLevelsNames.add(levelName);
 
-		CooperationServer cooperationServer = new CooperationServer(levelName, menu, scene, stage);
+		CooperationServer cooperationServer = new CooperationServer(levelName, this);
 		createdCooperationServers.add(cooperationServer);
 		try {
 			cooperationServer.runServer();
@@ -181,7 +189,7 @@ public class Server implements ServerInterface {
 	private void createCreatedEditorServers() {
 		for (String s : createdLevelsNames) {
 			EditorServer editorServer = new EditorServer(s, this);
-			defaultEditorServers.add(editorServer);
+			createdEditorServers.add(editorServer);
 			try {
 				editorServer.runServer();
 			} catch (IOException e) {
@@ -192,7 +200,7 @@ public class Server implements ServerInterface {
 
 	private void createDefaultCooperationServers() {
 		for (String s : defaultLevelsNames) {
-			CooperationServer cooperationServer = new CooperationServer(s, menu, scene, stage);
+			CooperationServer cooperationServer = new CooperationServer(s, this);
 			defaultCooperationServers.add(cooperationServer);
 			try {
 				cooperationServer.runServer();
@@ -204,7 +212,7 @@ public class Server implements ServerInterface {
 
 	private void createCreatedCooperationServers() {
 		for (String s : createdLevelsNames) {
-			CooperationServer cooperationServer = new CooperationServer(s, menu, scene, stage);
+			CooperationServer cooperationServer = new CooperationServer(s, this);
 			createdCooperationServers.add(cooperationServer);
 			try {
 				cooperationServer.runServer();
@@ -224,16 +232,19 @@ public class Server implements ServerInterface {
 	}
 
 	public int getPortOfGameServer(String levelName, String levelType, String serverType) {
-
 		if (levelType.equals("default")) {
 			if (serverType.equals("editor")) {
+				System.out.println("getPort1");
 				for (EditorServer es : defaultEditorServers) {
+					System.out.println(levelName + " isEqual? " + es.getLevelName());
 					if (es.getLevelName().equals(levelName)) {
 						return es.getPort();
 					}
 				}
 			} else if (serverType.equals("cooperation")) {
+				System.out.println("getPort2");
 				for (CooperationServer cs : defaultCooperationServers) {
+					System.out.println(levelName + " isEqual? " + cs.getLevelName());
 					if (cs.getLevelName().equals(levelName)) {
 						return cs.getPort();
 					}
@@ -243,13 +254,17 @@ public class Server implements ServerInterface {
 			}
 		} else if (levelType.equals("created")) {
 			if (serverType.equals("editor")) {
+				System.out.println("getPort3");
 				for (EditorServer es : createdEditorServers) {
+					System.out.println(levelName + " isEqual? " + es.getLevelName());
 					if (es.getLevelName().equals(levelName)) {
 						return es.getPort();
 					}
 				}
 			} else if (serverType.equals("cooperation")) {
+				System.out.println("getPort4");
 				for (CooperationServer cs : createdCooperationServers) {
+					System.out.println(levelName + " isEqual? " + cs.getLevelName());
 					if (cs.getLevelName().equals(levelName)) {
 						return cs.getPort();
 					}
@@ -258,6 +273,7 @@ public class Server implements ServerInterface {
 
 			}
 		}
+		System.out.println("getPortEnd");
 		return 0;
 
 	}
@@ -279,5 +295,82 @@ public class Server implements ServerInterface {
 
 	public void closeServer() throws IOException {
 		serverSocket.close();
+	}
+
+	public Image getLevelImg(String levelName) throws IOException {
+		File f = new File("src\\main\\resources\\server_levels\\images\\" + levelName + ".png");
+
+		if (f.exists()) {
+			FileInputStream tempStream = new FileInputStream(
+					"src\\main\\resources\\server_levels\\images\\" + levelName + ".png");
+			Image tempImg = new Image(tempStream);
+
+			int width = (int) tempImg.getWidth();
+			int height = (int) tempImg.getHeight();
+			float widthCompare = (float) 390 / (float) width;
+			float heightCompare = (float) 350 / (float) height;
+
+			if (widthCompare < heightCompare) {
+				width *= widthCompare;
+				height *= widthCompare;
+			} else {
+				width *= heightCompare;
+				height *= heightCompare;
+			}
+			FileInputStream tempStream2 = new FileInputStream(
+					"src\\main\\resources\\server_levels\\images\\" + levelName + ".png");
+//			SerializableImage img = new SerializableImage(tempStream2, width, height, false, false);
+
+			tempStream.close();
+			tempStream2.close();
+//			return img;
+		}
+		return null;
+	}
+
+	public Boolean deleteLevel(String levelName) {
+		String temp = null;
+		for (String s : createdLevelsNames) {
+			if (s.equals(levelName)) {
+				temp = s;
+			}
+		}
+		if (temp != null) {
+			createdLevelsNames.remove(temp);
+		}
+		
+		CooperationServer tempC = null;
+		for (CooperationServer s : createdCooperationServers) {
+			if (s.getLevelName().equals(levelName)) {
+				tempC = s;
+			}
+		}
+		if (tempC != null) {
+			createdCooperationServers.remove(tempC);
+		}
+		
+		EditorServer tempE = null;
+		for (EditorServer s : createdEditorServers) {
+			if (s.getLevelName().equals(levelName)) {
+				tempE = s;
+			}
+		}
+		if (tempE != null) {
+			createdEditorServers.remove(tempE);
+		}
+		
+		File fileToDelete = new File("src\\main\\resources\\server_levels\\created_levels\\" + levelName + ".txt");
+		
+		return fileToDelete.delete();
+	}
+
+	public String downloadMap(String s, String levelType) throws FileNotFoundException {
+		File levelData = new File("src\\main\\resources\\server_levels\\" + levelType + "\\" + s + ".txt");
+		Scanner reader = new Scanner(levelData);
+		String out = "";
+		while (reader.hasNextLine()) {
+			out += reader.nextLine() + "\n";
+		}
+		return out;
 	}
 }

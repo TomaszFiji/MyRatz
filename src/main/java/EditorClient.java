@@ -43,14 +43,12 @@ import javafx.util.Duration;
 
 public class EditorClient implements Controller {
 	private static final String SERVER_IP = "127.0.0.1";
-	private static final int SERVER_PORT = Menu.SERVER_PORT;
 	private EditorClientListener clientListener;
 	private EditorClientOutput clientOutput;
 	private boolean isReady = false;
 
 	// Size of one tile in pixels
 	private static final int TILE_SIZE = 64;
-	private static final String defaultLevelRegex = "level-[1-5]";
 	private static final int MILLIS_RATIO = 1000;
 
 	// Time between item drops
@@ -70,54 +68,39 @@ public class EditorClient implements Controller {
 	// Current tile selected to draw
 	private Tile selectedTile = new Grass();
 
-	@FXML
-	public Canvas levelCanvas;
-
-	public RadioButton rbGrass;
-	public RadioButton rbGrassB;
-	public RadioButton rbPath;
-	public RadioButton rbPathB;
-	public RadioButton rbTunnel;
-	public RadioButton rbTunnelB;
-
-	public HBox ratSpawnToolbar;
-
-	public TextField widthTextField;
-	public TextField heightTextField;
-	public Text widthText;
-	public Text heightText;
-	public Text sizeChangeErrorText;
-
-	public Pane settingsDialoguePane;
-
-	public TextField bombTextField;
-	public TextField gasTextField;
-	public TextField sterilizationTextField;
-	public TextField poisonTextField;
-	public TextField maleSwapTextField;
-	public TextField femaleSwapTextField;
-	public TextField stopSignTextField;
-	public TextField deathRatTextField;
+    @FXML
+    private TextField bombTextField;
+    private TextField deathRatTextField;
+    private TextField femaleSwapTextField;
+    private TextField gameTimerTextField;
+    private TextField gasTextField;
+    private Text heightText;
+    private TextField heightTextField;
+    private Canvas levelCanvas;
+    private Text levelNameText;
+    private TextField levelNameTextField;
+    private Button levelSettingsButton;
+    private TextField maleSwapTextField;
+    private TextField maxRatTextField;
+    private TextField poisonTextField;
+    private HBox ratSpawnToolbar;
+    private RadioButton rbGrass;
+    private RadioButton rbGrassB;
+    private RadioButton rbPath;
+    private RadioButton rbPathB;
+    private RadioButton rbTunnel;
+    private RadioButton rbTunnelB;
+    private Button readyButton;
+    private Text readyPlayersText;
+    private Pane settingsDialoguePane;
+    private Text settingsErrorText;
+    private Button sizeChangeButton;
+    private Text sizeChangeErrorText;
+    private TextField sterilizationTextField;
+    private TextField stopSignTextField;
+    private Text widthText;
+    private TextField widthTextField;
 	public TextField[] powerTextFields;
-
-	public TextField maxRatTextField;
-	public TextField gameTimerTextField;
-
-	public Text settingsErrorText;
-
-	public Pane saveLevelPane;
-	public TextField levelNameTextField;
-	public Text levelNameText;
-	public Text savingErrorText;
-
-	public Button sizeChangeButton;
-	public Button levelSettingsButton;
-	public Button saveLevelButton;
-	public Button saveAndExitButton;
-
-	@FXML
-	public Button readyButton;
-	public Text readyPlayersText;
 
 	// Level map
 	private Tile[][] tileMap = new Tile[0][0];
@@ -148,9 +131,8 @@ public class EditorClient implements Controller {
 		clientListener = new EditorClientListener(this, server);
 		clientOutput = new EditorClientOutput(this, server);
 		Thread clientListenerThread = new Thread(clientListener);
-		Thread clientOutputThread = new Thread(clientOutput);
+		
 		clientListenerThread.start();
-		// clientListenerThread.start();
 
 		System.out.println("runned*******************************");
 	}
@@ -681,151 +663,10 @@ public class EditorClient implements Controller {
 		rbTunnelB.setDisable(val);
 		rbPath.setDisable(val);
 		rbPathB.setDisable(val);
-		saveLevelButton.setDisable(val);
 		levelSettingsButton.setDisable(val);
 		sizeChangeButton.setDisable(val);
 		widthTextField.setDisable(val);
 		heightTextField.setDisable(val);
-	}
-
-	/**
-	 * Opens level saving dialogue box.
-	 */
-	@FXML
-	public void openSavingDialogueBox() {
-		saveLevelPane.setVisible(true);
-		setButtonDisabling(true);
-		disableCanvas();
-		if (getNumOfRats() <= 1) {
-			savingErrorText.setText("Please add more rat spawns to the level.");
-			saveAndExitButton.setDisable(true);
-		} else if (maxRats <= getNumOfRats()) {
-			savingErrorText.setText("Please fix level settings before saving.");
-			saveAndExitButton.setDisable(true);
-		} else {
-			saveAndExitButton.setDisable(false);
-			savingErrorText.setText("");
-		}
-	}
-
-	/**
-	 * Goes back to editor from level saving dialogue box.
-	 */
-	public void goBackToEditor() {
-		saveLevelPane.setVisible(false);
-		setupCanvasDrawing();
-		setupCanvasDragBehaviour();
-		setButtonDisabling(false);
-	}
-
-	/**
-	 * Changes all baby rats on tile map to adult ones.
-	 */
-	private void changeToAdultRats() {
-		for (int i = 0; i < tileMap.length; i++) {
-			for (int j = 0; j < tileMap[i].length; j++) {
-				if (tileMap[i][j].getOccupantRats().size() != 0) {
-					ChildRat rat = (ChildRat) tileMap[i][j].getOccupantRats().get(0);
-					if (rat.getRatSex() == Rat.Sex.MALE) {
-						tileMap[i][j].removeOccupantRat(rat);
-						tileMap[i][j].addOccupantRat(new AdultMale(this, 6, Rat.Direction.NORTH, 0, i, j, true));
-					} else if (rat.getRatSex() == Rat.Sex.FEMALE) {
-						tileMap[i][j].removeOccupantRat(rat);
-						tileMap[i][j]
-								.addOccupantRat(new AdultFemale(this, 6, Rat.Direction.NORTH, 0, i, j, true, 0, 0));
-					} else if (rat.getRatSex() == Rat.Sex.INTERSEX) {
-						tileMap[i][j].removeOccupantRat(rat);
-						tileMap[i][j]
-								.addOccupantRat(new AdultIntersex(this, 6, Rat.Direction.NORTH, 0, i, j, true, 0, 0));
-					}
-				}
-			}
-		}
-	}
-
-	/**
-	 * Changes all adult rats on tile map to adult ones.
-	 */
-	private void changeToBabyRats() {
-		for (int i = 0; i < tileMap.length; i++) {
-			for (int j = 0; j < tileMap[i].length; j++) {
-				if (tileMap[i][j].getOccupantRats().size() != 0) {
-					Rat rat = tileMap[i][j].getOccupantRats().get(0);
-					if (rat instanceof AdultMale) {
-						tileMap[i][j].removeOccupantRat(rat);
-						tileMap[i][j].addOccupantRat(
-								new ChildRat(this, 4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.MALE));
-					} else if (rat instanceof AdultFemale) {
-						tileMap[i][j].removeOccupantRat(rat);
-						tileMap[i][j].addOccupantRat(
-								new ChildRat(this, 4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.FEMALE));
-					} else if (rat instanceof AdultIntersex) {
-						tileMap[i][j].removeOccupantRat(rat);
-						tileMap[i][j].addOccupantRat(
-								new ChildRat(this, 4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.INTERSEX));
-					}
-				}
-			}
-		}
-	}
-
-	/**
-	 * Saves level once "Save Level" button is pressed.
-	 */
-	@FXML
-	public void saveLevel() {
-		String newLevelName = levelNameTextField.getText();
-		if (newLevelName.contains(" ")) {
-			savingErrorText.setText("Level name cannot contain spaces");
-		} else if (newLevelName.matches(defaultLevelRegex)) {
-			savingErrorText.setText("Level name cannot be the same as default level");
-		} else if (newLevelName.length() == 0) {
-			savingErrorText.setText("Level name cannot be empty");
-		} else {
-			savingErrorText.setText("");
-
-			changeToBabyRats();
-			for (int i = 0; i < dropRates.length; i++) {
-				dropRates[i] = dropRates[i] * MILLIS_RATIO;
-			}
-
-			SaveCustomLevel save = new SaveCustomLevel("src\\main\\resources\\levels\\created_levels\\" + newLevelName,
-					width, height, tileMap, maxRats, parTime, dropRates);
-
-			if (save.wasSaved()) {
-				makeScreenShot(newLevelName);
-				System.out.println("Screenshot was saved");
-
-				HighScores.createNewLevel(newLevelName);
-				ProfileFileReader.createNewLevel(newLevelName);
-				MAIN_MENU.finishLevel();
-			} else {
-				savingErrorText.setText("Level name already exists.");
-				changeToAdultRats();
-				for (int i = 0; i < dropRates.length; i++) {
-					dropRates[i] = dropRates[i] / MILLIS_RATIO;
-				}
-			}
-		}
-	}
-
-	/**
-	 * Makes screenshot of current tilemap.
-	 * 
-	 * @param levelName name of level being screenshot.
-	 */
-	public void makeScreenShot(String levelName) {
-		File file = new File("src\\main\\resources\\levels_images\\" + levelName + ".png");
-
-		WritableImage writableImage = new WritableImage(TILE_SIZE * width, TILE_SIZE * height);
-		SnapshotParameters params = new SnapshotParameters();
-		levelCanvas.snapshot(params, writableImage);
-
-		try {
-			ImageIO.write(SwingFXUtils.fromFXImage(writableImage, null), "png", file);
-		} catch (Throwable th) {
-		}
-
 	}
 
 	@Override
@@ -898,5 +739,14 @@ public class EditorClient implements Controller {
 		ft.setFromValue(1.0);
 		ft.setToValue(0.0);
 		ft.play();
+	}
+
+	public void stageClosing() {
+		clientOutput.stageClosing();
+	}
+	
+	public void leave() {
+		clientOutput.stageClosing();
+		MAIN_MENU.finishLevel();
 	}
 }

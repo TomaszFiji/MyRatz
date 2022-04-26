@@ -44,7 +44,7 @@ public class EditorServer implements Controller, ServerInterface {
 	private int port;
 	private int counterOfClients = 0;
 	private final String selectedEditLevelName;
-	private final boolean isDefaultLevel = true;
+	private boolean isDefaultLevel = true;
 	private boolean isMapLoaded = true;
 	private ArrayList<EditorServerThreadObjectOutput> clientsObjectsOutputs = new ArrayList<>();
 	private ArrayList<EditorServerThreadInput> clientsInputs = new ArrayList<>();
@@ -99,7 +99,6 @@ public class EditorServer implements Controller, ServerInterface {
 	public TextField femaleSwapTextField;
 	public TextField stopSignTextField;
 	public TextField deathRatTextField;
-	public TextField[] powerTextFields;
 
 	public TextField maxRatTextField;
 	public TextField gameTimerTextField;
@@ -114,26 +113,11 @@ public class EditorServer implements Controller, ServerInterface {
 	public Button levelSettingsButton;
 	public Button saveLevelButton;
 	public Button saveAndExitButton;
+	public TextField[] powerTextFields;
 
 	// Level map
 	private Tile[][] tileMap = new Tile[0][0];
 	private Server server;
-
-	private void removeControllerFromMap() {
-		for (Tile[] tileList : tileMap) {
-			for (Tile t : tileList) {
-				t.setController(null);
-
-				for (Power p : t.getActivePowers()) {
-					p.setController(null);
-				}
-
-				for (Rat r : t.getOccupantRats()) {
-					r.setController(null);
-				}
-			}
-		}
-	}
 
 	public synchronized Tile[][] getTileMap() throws InterruptedException {
 		// this.removeControllerFromMap();
@@ -173,10 +157,13 @@ public class EditorServer implements Controller, ServerInterface {
 	public EditorServer(String levelName, Server server) {
 		this.server = server;
 		this.isMapLoaded = true;
+		this.isDefaultLevel = levelName.matches(defaultLevelRegex);
 //		this.scene = scene;
 //		this.stage = stage;
 		this.selectedEditLevelName = levelName;
 		this.levelName = levelName;
+		dropRates = new int[8];
+		Arrays.fill(dropRates, 1);
 //		MAIN_MENU = mainMenuController;
 
 //		width = LevelFileReader.getWidth();
@@ -194,21 +181,36 @@ public class EditorServer implements Controller, ServerInterface {
 	}
 
 	public String getLevelName() {
-		return levelName;
+		return selectedEditLevelName;
+	}
+
+	private void removeControllerFromMap() {
+		for (Tile[] tileList : tileMap) {
+			for (Tile t : tileList) {
+				t.setController(null);
+
+				for (Power p : t.getActivePowers()) {
+					p.setController(null);
+				}
+
+				for (Rat r : t.getOccupantRats()) {
+					r.setController(null);
+				}
+			}
+		}
 	}
 
 	public void runTheGame() throws IOException {
-
 		FXMLLoader loader = new FXMLLoader(getClass().getResource("editor.fxml"));
-
-		if (isMapLoaded) {
-			if (isDefaultLevel) {
-				LevelFileReader.loadNormalLevelFile(this,
-						"src/main/resources/server_levels/default_levels/" + selectedEditLevelName, true);
-			} else {
-				LevelFileReader.loadNormalLevelFile(this,
-						"src/main/resources/server_levels/created_levels/" + selectedEditLevelName, true);
-			}
+		loader.setController(this);
+		loader.load();
+		
+		if (isDefaultLevel) {
+			LevelFileReader.loadNormalLevelFile(this,
+					"src/main/resources/server_levels/default_levels/" + selectedEditLevelName, true);
+		} else {
+			LevelFileReader.loadNormalLevelFile(this,
+					"src/main/resources/server_levels/created_levels/" + selectedEditLevelName, true);
 		}
 
 		width = LevelFileReader.getWidth();
@@ -224,18 +226,12 @@ public class EditorServer implements Controller, ServerInterface {
 			dropRates[i] = dropRates[i] / MILLIS_RATIO;
 		}
 		this.removeControllerFromMap();
-		loader.setController(this);
-		Pane root = loader.load();
-
-//		scene = new Scene(root, root.getPrefWidth(), root.getPrefHeight());
-//		stage.setScene(scene);
-//		stage.show();
 	}
 
 	public void runServer() throws IOException {
 		editorServer = new ServerSocket(0);
 		System.out.println(editorServer.getLocalSocketAddress() + " " + InetAddress.getLocalHost().getHostAddress()
-				+ " " + editorServer.getLocalPort());
+				+ " " + editorServer.getLocalPort() + " " + this.levelName);
 		this.port = editorServer.getLocalPort();
 
 		System.out.println("initializing");
@@ -272,6 +268,8 @@ public class EditorServer implements Controller, ServerInterface {
 			getClientOutputByClient(client).sendLevelNameMessage("Level name cannot be empty");
 		} else if (levelName.matches(defaultLevelRegex)) {
 			getClientOutputByClient(client).sendLevelNameMessage("Level name cannot be the same as default level");
+		} else if (doesLevelExist(levelName)) {
+			getClientOutputByClient(client).sendLevelNameMessage("Level name already exist");
 		} else {
 			Boolean isReadyBoolean;
 			if (isReady.equals("true")) {
@@ -327,7 +325,7 @@ public class EditorServer implements Controller, ServerInterface {
 		System.out.println("new threads");
 
 		Thread clientInputThread = new Thread(clientInput);
-		
+
 		clientsInputsThreads.add(clientInputThread);
 
 		clientInputThread.start();
@@ -337,6 +335,10 @@ public class EditorServer implements Controller, ServerInterface {
 			runTheGame();
 		}
 		this.setAllNotReady();
+		clientOutput.sendLevelNameMessage(levelName);
+		clientOutput.sendMap();
+		this.setReady(client, "false");
+		clientOutput.sendSettings(new Settings(maxRats, parTime, dropRates));
 	}
 
 	/**
@@ -672,18 +674,18 @@ public class EditorServer implements Controller, ServerInterface {
 	 * Renders tilemap onto window.
 	 */
 	private void renderBoard() {
-		GraphicsContext gc = levelCanvas.getGraphicsContext2D();
+//		GraphicsContext gc = levelCanvas.getGraphicsContext2D();
+//
+//		gc.setFill(Color.web("#2d4945"));
+//		gc.fillRect(0, 0, levelCanvas.getWidth(), levelCanvas.getHeight());
 
-		gc.setFill(Color.web("#2d4945"));
-		gc.fillRect(0, 0, levelCanvas.getWidth(), levelCanvas.getHeight());
-
-		if (tileMap != null) {
-			for (int i = 0; i < tileMap.length; i++) {
-				for (int j = 0; j < tileMap[i].length; j++) {
-					tileMap[i][j].draw(i, j, gc);
-				}
-			}
-		}
+//		if (tileMap != null) {
+//			for (int i = 0; i < tileMap.length; i++) {
+//				for (int j = 0; j < tileMap[i].length; j++) {
+//					tileMap[i][j].draw(i, j, gc);
+//				}
+//			}
+//		}
 
 		this.setAllNotReady();
 		for (EditorServerThreadObjectOutput est : clientsObjectsOutputs) {
@@ -942,26 +944,27 @@ public class EditorServer implements Controller, ServerInterface {
 
 //		makeScreenShot(levelName);
 		System.out.println("Screenshot was saved");
-		
+
 		for (EditorServerThreadObjectOutput e : clientsObjectsOutputs) {
 			e.closeStream();
 		}
 		for (Thread e : clientsInputsThreads) {
 			e.interrupt();
 		}
-		
+
 		try {
 			editorServer.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+
 		boolean isDefault = selectedEditLevelName.matches(defaultLevelRegex);
 		if (isDefault) {
-			server.addNewGameServer(levelName);
+			server.restartGameServer(selectedEditLevelName, "default", "editor");
 		} else {
 			server.restartGameServer(selectedEditLevelName, "created", "editor");
 		}
-		server.restartGameServer(selectedEditLevelName, "default", "editor");
+		server.addNewGameServer(levelName);
 
 	}
 
@@ -1011,6 +1014,15 @@ public class EditorServer implements Controller, ServerInterface {
 		return null;
 	}
 
+	private EditorServerThreadInput getClientInputByClient(Socket client) {
+		for (EditorServerThreadInput c : clientsInputs) {
+			if (c.getClient().equals(client)) {
+				return c;
+			}
+		}
+		return null;
+	}
+
 	/**
 	 * Makes screenshot of current tilemap.
 	 * 
@@ -1026,51 +1038,53 @@ public class EditorServer implements Controller, ServerInterface {
 		try {
 			ImageIO.write(SwingFXUtils.fromFXImage(writableImage, null), "png", file);
 		} catch (Throwable th) {
-			// TODO: handle this exception
 		}
 
 	}
 
 	@Override
 	public Tile getTileAt(int x, int y) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public void ratKilled(Rat rat) {
-		// TODO Auto-generated method stub
 
 	}
 
 	@Override
 	public void ratAdded(Rat rat) {
-		// TODO Auto-generated method stub
 
 	}
 
 	@Override
 	public void ratRemoved(Rat rat) {
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	public int[] getCounters() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public int getCurrentTimeLeft() {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 
 	@Override
 	public void addPowersFromSave(int[] inProgInv) {
-		// TODO Auto-generated method stub
 
+	}
+
+	public void clientLeaving(Socket client) {
+		System.out.println("Client leaving");
+		clients.remove(client);
+		int index = this.clientsInputs.indexOf(this.getClientInputByClient(client));
+		this.clientsInputs.remove(index);
+		this.clientsObjectsOutputs.remove(index);
+		this.clientsInputsThreads.get(index).interrupt();
+		this.clientsInputsThreads.remove(index);
+		this.setAllNotReady();
 	}
 
 }

@@ -1,16 +1,44 @@
 import java.io.Serializable;
 
 public class TimeAndRatCounters implements Serializable {
-	String timeLeft;
-	String maleRatCounter;
-	String femaleRatCounter;
-	String ratCounter;
+	private String timeLeft;
+	private String maleRatCounter;
+	private String femaleRatCounter;
+	private String ratCounter;
+	private boolean gameEnd = false;
+	private boolean gameWon = false;
 
 	public TimeAndRatCounters(String timeLeft, String maleRatCounter, String femaleRatCounter, String ratCounter) {
 		this.timeLeft = timeLeft;
 		this.maleRatCounter = maleRatCounter;
 		this.femaleRatCounter = femaleRatCounter;
 		this.ratCounter = ratCounter;
+	}
+
+	public TimeAndRatCounters(String timeLeft, String maleRatCounter, String femaleRatCounter, String ratCounter,
+			boolean gameEnd, boolean gameWon) {
+		this.timeLeft = timeLeft;
+		this.maleRatCounter = maleRatCounter;
+		this.femaleRatCounter = femaleRatCounter;
+		this.ratCounter = ratCounter;
+		this.gameEnd = gameEnd;
+		this.gameWon = gameWon;
+	}
+
+	public boolean isGameEnd() {
+		return gameEnd;
+	}
+
+	public void setGameEnd(boolean gameEnd) {
+		this.gameEnd = gameEnd;
+	}
+
+	public boolean isGameWon() {
+		return gameWon;
+	}
+
+	public void setGameWon(boolean gameWon) {
+		this.gameWon = gameWon;
 	}
 
 	public String getTimeLeft() {

@@ -337,7 +337,7 @@ public class LevelFileReader {
 	 * @param directionInt int from 0-3 representing north, east, south, west
 	 * @return Direction
 	 */
-	private static Rat.Direction directionIntToEnum(int directionInt) {
+	public static Rat.Direction directionIntToEnum(int directionInt) {
 		switch (directionInt) {
 		case 0:
 			return Rat.Direction.NORTH;
@@ -416,7 +416,7 @@ public class LevelFileReader {
 		// this ugly regex splits currentTiles based on the level's width
 		String[] tiles = currentTiles.split("(?<=\\G.{" + width + "})");
 
-		tileMap = tilesToTileMap(tiles);
+		tileMap = tilesToTileMap(tiles, width, height);
 
 		hasLoadedSavedLevel = false;
 		if (loadDefaultObjects) {
@@ -736,7 +736,7 @@ public class LevelFileReader {
 	 * @param tiles The strings to be converted
 	 * @return a tile map
 	 */
-	private static Tile[][] tilesToTileMap(String[] tiles) {
+	public static Tile[][] tilesToTileMap(String[] tiles, int width, int height) {
 		Tile[][] tileMap = new Tile[width][height];
 		for (int i = 0; i < tileMap[0].length; i++) {
 			int charPos = -1;

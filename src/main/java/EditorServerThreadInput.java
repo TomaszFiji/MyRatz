@@ -17,6 +17,10 @@ public class EditorServerThreadInput implements Runnable {
 		this.isReady = false;
 		this.in = new BufferedReader(new InputStreamReader(client.getInputStream()));
 	}
+	
+	public Socket getClient() {
+		return this.client;
+	}
 
 	@Override
 	public void run() {
@@ -45,6 +49,9 @@ public class EditorServerThreadInput implements Runnable {
 					break;
 				case "levelName":
 					this.server.changeName(client, inputs);
+					break;
+				case "closing":
+					this.server.clientLeaving(client);
 					break;
 				}
 				

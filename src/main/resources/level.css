@@ -69,3 +69,9 @@
     -fx-font-size: 18px;
     -fx-font-family: 'Linerama';
 }
+#waitingForPlayers {
+    -fx-text-alignment: center;
+    -fx-fill: #00ffe4;
+    -fx-font-size: 30.0px;
+    -fx-font-family: 'Linerama';
+}
