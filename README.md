@@ -1,8 +1,3 @@
-# Ratz
-![Project Status Label](https://img.shields.io/badge/project_status-in_progress-active)
-![Last Commit Label](https://img.shields.io/github/last-commit/Greenfoot5/Ratz/main?logo=Github)
-![Total Lines Label](https://img.shields.io/tokei/lines/github/Greenfoot5/Ratz)
-![Contributor Count Label](https://img.shields.io/github/contributors/Greenfoot5/Ratz?color=blue)
 
 Based off the 1996 game Rats! by Sean O'Connor, built in Java and JavaFX.
 
@@ -13,11 +8,14 @@ Based off the 1996 game Rats! by Sean O'Connor, built in Java and JavaFX.
 3. Kill the rats before they overwhelm you!
 
 # Installing, Compiling and Executing
+run project as maven project with goals: compile javafx:run
 ```sh
-$ git clone https://github.com/Greenfoot5/Ratz.git
-$ cd Ratz
+$ git clone https://github.com/TomaszFiji/MyRatz
+$ cd MyRatz
 $ mvn clean javafx:run
 ```
+
+
 
 # Design
 _Please note, as this was a coursework project, the final result was a modified version of design, and the design was not updated post-submission (it was completed before starting the programming)_
@@ -49,6 +47,7 @@ _Please note, as this was a coursework project, the final result was a modified 
 - Designed and implemented Profiles and their classes/files
 - Developed a High Score system
 - Designed a style sheet for various menus including main menu and level selection
+- Designed and implemented everything connected to multi player mode
 
 #### [translibrius](https://github.com/translibrius) - Programmer, UI/UX
 - Designed and implemented all Power classes, along with the music and sound player (SeaShantySimulator)
