@@ -19,8 +19,8 @@ public abstract class Power extends GameObject {
      * @param yPos y coordinate
      */
 
-    Power(boolean isPassable, int xPos, int yPos) {
-        super(isPassable);
+    Power(Controller controller, boolean isPassable, int xPos, int yPos) {
+        super(isPassable, controller);
         this.xPos = xPos;
         this.yPos = yPos;
     }

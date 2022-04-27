@@ -10,13 +10,14 @@
 
 <VBox fx:id="serverRoot" alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="500.0" prefWidth="800.0" spacing="2.0" stylesheets="@menu.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="MenuController">
    <AnchorPane prefHeight="160.0" prefWidth="800.0" />
-   <Label text="Server is running" />
+   <Label id="selectedLevelHeadingLabel" text="Server is running" />
    <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="10.0">
       <children>
          <Label text="IP: " />
          <Label fx:id="serverIPLabel" layoutX="10.0" layoutY="10.0" text="Label" />
       </children>
    </HBox>
+   <Label id="labelMOTD" text="use &quot;localhost&quot; IP if you use the same computer for server and client" />
    <HBox alignment="CENTER" layoutX="10.0" layoutY="184.0" prefHeight="100.0" prefWidth="200.0" spacing="10.0">
       <children>
          <Label text="Port:" />

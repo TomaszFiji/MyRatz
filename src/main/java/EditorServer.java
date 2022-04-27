@@ -1,25 +1,21 @@
 import static java.lang.Integer.parseInt;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
+import java.util.HashMap;
+import java.util.Set;
 import javax.imageio.ImageIO;
 
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.TextField;
@@ -33,25 +29,19 @@ import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
-import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
-import javafx.stage.Stage;
 
-public class EditorServer {
+public class EditorServer implements Controller, ServerInterface {
 	private ServerSocket editorServer;
 	private int port;
 	private int counterOfClients = 0;
 	private final String selectedEditLevelName;
-	private final boolean isDefaultLevel = true;
+	private boolean isDefaultLevel = true;
 	private boolean isMapLoaded = true;
-	private Scene scene;
-	private Stage stage;
 	private ArrayList<EditorServerThreadObjectOutput> clientsObjectsOutputs = new ArrayList<>();
 	private ArrayList<EditorServerThreadInput> clientsInputs = new ArrayList<>();
-
-	private boolean areAllReady() {
-		return false;
-	}
+	private ArrayList<Thread> clientsInputsThreads = new ArrayList<>();
+	private HashMap<Socket, Boolean> clients = new HashMap<>();
 
 	// Size of one tile in pixels
 	private static final int TILE_SIZE = 64;
@@ -62,7 +52,6 @@ public class EditorServer {
 	private int[] dropRates;
 
 	private String levelName;
-	private MenuController MAIN_MENU;
 
 	// Size of game map
 	private int width;
@@ -101,7 +90,6 @@ public class EditorServer {
 	public TextField femaleSwapTextField;
 	public TextField stopSignTextField;
 	public TextField deathRatTextField;
-	public TextField[] powerTextFields;
 
 	public TextField maxRatTextField;
 	public TextField gameTimerTextField;
@@ -116,11 +104,14 @@ public class EditorServer {
 	public Button levelSettingsButton;
 	public Button saveLevelButton;
 	public Button saveAndExitButton;
+	public TextField[] powerTextFields;
 
 	// Level map
 	private Tile[][] tileMap = new Tile[0][0];
+	private Server server;
 
 	public synchronized Tile[][] getTileMap() throws InterruptedException {
+		// this.removeControllerFromMap();
 		return tileMap;
 	}
 
@@ -132,7 +123,6 @@ public class EditorServer {
 	public EditorServer(MenuController mainMenuController) {
 
 		this.selectedEditLevelName = "";
-		MAIN_MENU = mainMenuController;
 		width = 10;
 		height = 7;
 		tileMap = new Tile[width][height];
@@ -154,45 +144,58 @@ public class EditorServer {
 	 * @param levelName          name of original existing level.
 	 * @param mainMenuController reference to main menu.
 	 */
-	public EditorServer(String levelName, MenuController mainMenuController, Scene scene, Stage stage) {
+	public EditorServer(String levelName, Server server) {
+		this.server = server;
 		this.isMapLoaded = true;
-		this.scene = scene;
-		this.stage = stage;
+		this.isDefaultLevel = levelName.matches(defaultLevelRegex);
 		this.selectedEditLevelName = levelName;
 		this.levelName = levelName;
-		MAIN_MENU = mainMenuController;
-
-//		width = LevelFileReader.getWidth();
-//		height = LevelFileReader.getHeight();
-//
-//		tileMap = LevelFileReader.getTileMap();
-//		changeToAdultRats();
-//
-//		maxRats = LevelFileReader.getMaxRats();
-//		parTime = LevelFileReader.getParTime();
-//		dropRates = LevelFileReader.getDropRates();
-//		for (int i = 0; i < dropRates.length; i++) {
-//			dropRates[i] = dropRates[i] / MILLIS_RATIO;
-//		}
+		dropRates = new int[8];
+		Arrays.fill(dropRates, 1);
 	}
-	
+
+	/**
+	 * Gets level name.
+	 * @return level name
+	 */
 	public String getLevelName() {
-		return levelName;
+		return selectedEditLevelName;
 	}
 
+	/**
+	 * Removes controller from tile map.
+	 */
+	private void removeControllerFromMap() {
+		for (Tile[] tileList : tileMap) {
+			for (Tile t : tileList) {
+				t.setController(null);
 
-	public void runTheGame() throws IOException {
+				for (Power p : t.getActivePowers()) {
+					p.setController(null);
+				}
 
-		FXMLLoader loader = new FXMLLoader(getClass().getResource("editor.fxml"));
-
-		if (isMapLoaded) {
-			if (isDefaultLevel) {
-				LevelFileReader.loadNormalLevelFile("src/main/resources/levels/default_levels/" + selectedEditLevelName,
-						true);
-			} else {
-				LevelFileReader.loadNormalLevelFile("src/main/resources/levels/created_levels/" + selectedEditLevelName,
-						true);
+				for (Rat r : t.getOccupantRats()) {
+					r.setController(null);
+				}
 			}
+		}
+	}
+
+	/**
+	 * Runs the game.
+	 * @throws IOException
+	 */
+	public void runTheGame() throws IOException {
+		FXMLLoader loader = new FXMLLoader(getClass().getResource("editor.fxml"));
+		loader.setController(this);
+		loader.load();
+		
+		if (isDefaultLevel) {
+			LevelFileReader.loadNormalLevelFile(this,
+					"src/main/resources/server_levels/default_levels/" + selectedEditLevelName, true);
+		} else {
+			LevelFileReader.loadNormalLevelFile(this,
+					"src/main/resources/server_levels/created_levels/" + selectedEditLevelName, true);
 		}
 
 		width = LevelFileReader.getWidth();
@@ -207,32 +210,116 @@ public class EditorServer {
 		for (int i = 0; i < dropRates.length; i++) {
 			dropRates[i] = dropRates[i] / MILLIS_RATIO;
 		}
-
-		loader.setController(this);
-		Pane root = loader.load();
-
-		scene = new Scene(root, root.getPrefWidth(), root.getPrefHeight());
-		stage.setScene(scene);
-		stage.show();
+		this.removeControllerFromMap();
 	}
 
+	/**
+	 * Runs a server.
+	 * @throws IOException
+	 */
 	public void runServer() throws IOException {
 		editorServer = new ServerSocket(0);
 		System.out.println(editorServer.getLocalSocketAddress() + " " + InetAddress.getLocalHost().getHostAddress()
-				+ " " + editorServer.getLocalPort());
+				+ " " + editorServer.getLocalPort() + " " + this.levelName);
 		this.port = editorServer.getLocalPort();
-		
+
 		System.out.println("initializing");
-		EditorServerAcceptances esa = new EditorServerAcceptances(this, editorServer);
-		Thread esaThread = new Thread(esa);
-		esaThread.start();
+		ServerAcceptances esa = new ServerAcceptances(this, editorServer);
+		Thread saThread = new Thread(esa);
+		saThread.start();
 	}
-	
+
+	/**
+	 * Gets port of a server.
+	 * @return port
+	 */
 	public int getPort() {
 		return editorServer.getLocalPort();
 	}
 
+	/**
+	 * Sets all client on not ready state.
+	 */
+	private void setAllNotReady() {
+		Set<Socket> temp = clients.keySet();
+
+		for (Socket c : temp) {
+			clients.replace(c, false);
+
+		}
+
+		for (EditorServerThreadObjectOutput c : clientsObjectsOutputs) {
+			c.setReady(false);
+			c.sendReadyStatus(new ReadyStatus(0, clients.size(), levelName));
+		}
+	}
+
+	/**
+	 * Sets specified client on ready state.
+	 * @param client
+	 * @param isReady
+	 */
+	public synchronized void setReady(Socket client, String isReady) {
+
+		if (getNumOfRats() <= 1) {
+			getClientOutputByClient(client).sendLevelNameMessage("Please add more rat spawns to the level.");
+		} else if (maxRats <= getNumOfRats()) {
+			getClientOutputByClient(client).sendLevelNameMessage("Please fix level settings before saving.");
+		} else if (levelName == null || levelName.equals("")) {
+			getClientOutputByClient(client).sendLevelNameMessage("Level name cannot be empty");
+		} else if (levelName.matches(defaultLevelRegex)) {
+			getClientOutputByClient(client).sendLevelNameMessage("Level name cannot be the same as default level");
+		} else if (doesLevelExist(levelName)) {
+			getClientOutputByClient(client).sendLevelNameMessage("Level name already exist");
+		} else {
+			Boolean isReadyBoolean;
+			if (isReady.equals("true")) {
+				isReadyBoolean = true;
+			} else {
+				isReadyBoolean = false;
+			}
+			clients.replace(client, isReadyBoolean);
+
+			int readyPlayers = 0;
+			Set<Socket> temp = clients.keySet();
+
+			for (Socket c : temp) {
+				if (clients.get(c)) {
+					readyPlayers++;
+				}
+			}
+
+			for (EditorServerThreadObjectOutput c : clientsObjectsOutputs) {
+				if (c.getClient().equals(client)) {
+					c.setReady(isReadyBoolean);
+				}
+				c.sendReadyStatus(new ReadyStatus(readyPlayers, clients.size(), levelName));
+			}
+
+			if (!clients.containsValue(false)) {
+				for (EditorServerThreadObjectOutput c : clientsObjectsOutputs) {
+					c.sendReadyStatus(new ReadyStatus(readyPlayers, clients.size(), levelName, true));
+				}
+
+				for (Socket c : clients.keySet()) {
+					try {
+						c.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+
+				this.saveLevel();
+
+			}
+		}
+	}
+
+	/**
+	 * Adds client to a server.
+	 */
 	public synchronized void addClient(Socket client) throws IOException {
+		clients.put(client, false);
 		EditorServerThreadObjectOutput clientOutput = new EditorServerThreadObjectOutput(this, client);
 		EditorServerThreadInput clientInput = new EditorServerThreadInput(this, client);
 
@@ -241,16 +328,21 @@ public class EditorServer {
 
 		System.out.println("new threads");
 
-		Thread clientOutputThread = new Thread(clientOutput);
 		Thread clientInputThread = new Thread(clientInput);
 
-		clientOutputThread.start();
+		clientsInputsThreads.add(clientInputThread);
+
 		clientInputThread.start();
-		
+
 		counterOfClients++;
-		if(counterOfClients == 1) {
+		if (counterOfClients == 1) {
 			runTheGame();
 		}
+		this.setAllNotReady();
+		clientOutput.sendLevelNameMessage(levelName);
+		clientOutput.sendMap();
+		this.setReady(client, "false");
+		clientOutput.sendSettings(new Settings(maxRats, parTime, dropRates));
 	}
 
 	/**
@@ -306,6 +398,10 @@ public class EditorServer {
 		});
 	}
 
+	/**
+	 * Adds rat to tile map.
+	 * @param inputs info about rat
+	 */
 	public synchronized void ratAdded(String[] inputs) {
 		int x = Integer.parseInt(inputs[2]);
 		int y = Integer.parseInt(inputs[3]);
@@ -315,15 +411,15 @@ public class EditorServer {
 		}
 		switch (inputs[1].charAt(0)) {
 		case 'm':
-			tileMap[x][y].addOccupantRat(new AdultMale(1, Rat.Direction.NORTH, 0, 0, 0, false));
+			tileMap[x][y].addOccupantRat(new AdultMale(null, 1, Rat.Direction.NORTH, 0, 0, 0, false));
 			System.out.println("male " + x + " " + y + " " + tileMap);
 			break;
 		case 'f':
-			tileMap[x][y].addOccupantRat(new AdultFemale(1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0));
+			tileMap[x][y].addOccupantRat(new AdultFemale(null, 1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0));
 			System.out.println("female " + x + " " + y);
 			break;
 		case 'i':
-			tileMap[x][y].addOccupantRat(new AdultIntersex(1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0));
+			tileMap[x][y].addOccupantRat(new AdultIntersex(null, 1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0));
 			System.out.println("intersex " + x + " " + y);
 			break;
 		}
@@ -346,15 +442,15 @@ public class EditorServer {
 		}
 		switch (type) {
 		case 'm':
-			tileMap[x][y].addOccupantRat(new AdultMale(1, Rat.Direction.NORTH, 0, 0, 0, false));
+			tileMap[x][y].addOccupantRat(new AdultMale(null, 1, Rat.Direction.NORTH, 0, 0, 0, false));
 			System.out.println("male " + x + " " + y + " " + tileMap);
 			break;
 		case 'f':
-			tileMap[x][y].addOccupantRat(new AdultFemale(1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0));
+			tileMap[x][y].addOccupantRat(new AdultFemale(null, 1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0));
 			System.out.println("female " + x + " " + y);
 			break;
 		case 'i':
-			tileMap[x][y].addOccupantRat(new AdultIntersex(1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0));
+			tileMap[x][y].addOccupantRat(new AdultIntersex(null, 1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0));
 			System.out.println("intersex " + x + " " + y);
 			break;
 		}
@@ -366,9 +462,9 @@ public class EditorServer {
 	 * Sets up ability to drag rat spawns onto tilemap.
 	 */
 	private void setupDraggableSpawns() {
-		AdultMale adultMale = new AdultMale(1, Rat.Direction.NORTH, 0, 0, 0, false);
-		AdultFemale adultFemale = new AdultFemale(1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0);
-		AdultIntersex adultIntersex = new AdultIntersex(1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0);
+		AdultMale adultMale = new AdultMale(null, 1, Rat.Direction.NORTH, 0, 0, 0, false);
+		AdultFemale adultFemale = new AdultFemale(null, 1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0);
+		AdultIntersex adultIntersex = new AdultIntersex(null, 1, Rat.Direction.NORTH, 0, 0, 0, false, 0, 0);
 
 		ImageView adultMaleImageView = new ImageView(adultMale.getImg());
 		ImageView adultFemaleImageView = new ImageView(adultFemale.getImg());
@@ -402,6 +498,10 @@ public class EditorServer {
 		});
 	}
 
+	/**
+	 * Adds tile to map.
+	 * @param inputs info about tile.
+	 */
 	public synchronized void tileAdded(String[] inputs) {
 		char type = inputs[1].charAt(0);
 		int x = Integer.parseInt(inputs[2]);
@@ -586,18 +686,7 @@ public class EditorServer {
 	 * Renders tilemap onto window.
 	 */
 	private void renderBoard() {
-		GraphicsContext gc = levelCanvas.getGraphicsContext2D();
-
-		gc.setFill(Color.web("#2d4945"));
-		gc.fillRect(0, 0, levelCanvas.getWidth(), levelCanvas.getHeight());
-
-		if (tileMap != null) {
-			for (int i = 0; i < tileMap.length; i++) {
-				for (int j = 0; j < tileMap[i].length; j++) {
-					tileMap[i][j].draw(i, j, gc);
-				}
-			}
-		}
+		this.setAllNotReady();
 		for (EditorServerThreadObjectOutput est : clientsObjectsOutputs) {
 			est.sendMap();
 		}
@@ -674,6 +763,10 @@ public class EditorServer {
 		settingsDialoguePane.setVisible(true);
 	}
 
+	/**
+	 * Saves map settings.
+	 * @param inputs	settings info
+	 */
 	public void saveSettings(String[] inputs) {
 		maxRatTextField.setText(inputs[1]);
 		gameTimerTextField.setText(inputs[2]);
@@ -692,14 +785,13 @@ public class EditorServer {
 		try {
 			maxRats = parseInt(maxRatTextField.getText());
 			parTime = parseInt(gameTimerTextField.getText());
-			boolean wrongDropRate = false;
 			for (int i = 0; i < dropRates.length; i++) {
 				dropRates[i] = parseInt(powerTextFields[i].getText());
 				if (dropRates[i] < 0) {
-					wrongDropRate = true;
 				}
 			}
 
+			this.setAllNotReady();
 			for (EditorServerThreadObjectOutput est : clientsObjectsOutputs) {
 				est.sendSettings(new Settings(maxRats, parTime, dropRates));
 			}
@@ -794,13 +886,15 @@ public class EditorServer {
 					ChildRat rat = (ChildRat) tileMap[i][j].getOccupantRats().get(0);
 					if (rat.getRatSex() == Rat.Sex.MALE) {
 						tileMap[i][j].removeOccupantRat(rat);
-						tileMap[i][j].addOccupantRat(new AdultMale(6, Rat.Direction.NORTH, 0, i, j, true));
+						tileMap[i][j].addOccupantRat(new AdultMale(null, 6, Rat.Direction.NORTH, 0, i, j, true));
 					} else if (rat.getRatSex() == Rat.Sex.FEMALE) {
 						tileMap[i][j].removeOccupantRat(rat);
-						tileMap[i][j].addOccupantRat(new AdultFemale(6, Rat.Direction.NORTH, 0, i, j, true, 0, 0));
+						tileMap[i][j]
+								.addOccupantRat(new AdultFemale(null, 6, Rat.Direction.NORTH, 0, i, j, true, 0, 0));
 					} else if (rat.getRatSex() == Rat.Sex.INTERSEX) {
 						tileMap[i][j].removeOccupantRat(rat);
-						tileMap[i][j].addOccupantRat(new AdultIntersex(6, Rat.Direction.NORTH, 0, i, j, true, 0, 0));
+						tileMap[i][j]
+								.addOccupantRat(new AdultIntersex(null, 6, Rat.Direction.NORTH, 0, i, j, true, 0, 0));
 					}
 				}
 			}
@@ -817,16 +911,16 @@ public class EditorServer {
 					Rat rat = tileMap[i][j].getOccupantRats().get(0);
 					if (rat instanceof AdultMale) {
 						tileMap[i][j].removeOccupantRat(rat);
-						tileMap[i][j]
-								.addOccupantRat(new ChildRat(4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.MALE));
+						tileMap[i][j].addOccupantRat(
+								new ChildRat(null, 4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.MALE));
 					} else if (rat instanceof AdultFemale) {
 						tileMap[i][j].removeOccupantRat(rat);
-						tileMap[i][j]
-								.addOccupantRat(new ChildRat(4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.FEMALE));
+						tileMap[i][j].addOccupantRat(
+								new ChildRat(null, 4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.FEMALE));
 					} else if (rat instanceof AdultIntersex) {
 						tileMap[i][j].removeOccupantRat(rat);
 						tileMap[i][j].addOccupantRat(
-								new ChildRat(4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.INTERSEX));
+								new ChildRat(null, 4, Rat.Direction.NORTH, 0, i, j, true, 0, Rat.Sex.INTERSEX));
 					}
 				}
 			}
@@ -838,39 +932,111 @@ public class EditorServer {
 	 */
 	@FXML
 	public void saveLevel() {
-		String newLevelName = levelNameTextField.getText();
-		if (newLevelName.contains(" ")) {
-			savingErrorText.setText("Level name cannot contain spaces");
-		} else if (newLevelName.matches(defaultLevelRegex)) {
-			savingErrorText.setText("Level name cannot be the same as default level");
-		} else if (newLevelName.length() == 0) {
-			savingErrorText.setText("Level name cannot be empty");
+		changeToBabyRats();
+		for (int i = 0; i < dropRates.length; i++) {
+			dropRates[i] = dropRates[i] * MILLIS_RATIO;
+		}
+
+		new SaveCustomLevel("src\\main\\resources\\server_levels\\created_levels\\" + levelName,
+				width, height, tileMap, maxRats, parTime, dropRates);
+
+		System.out.println("Screenshot was saved");
+
+		for (EditorServerThreadObjectOutput e : clientsObjectsOutputs) {
+			e.closeStream();
+		}
+		for (Thread e : clientsInputsThreads) {
+			e.interrupt();
+		}
+
+		try {
+			editorServer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		boolean isDefault = selectedEditLevelName.matches(defaultLevelRegex);
+		if (isDefault) {
+			server.restartGameServer(selectedEditLevelName, "default", "editor");
 		} else {
-			savingErrorText.setText("");
+			server.restartGameServer(selectedEditLevelName, "created", "editor");
+		}
+		server.addNewGameServer(levelName);
 
-			changeToBabyRats();
-			for (int i = 0; i < dropRates.length; i++) {
-				dropRates[i] = dropRates[i] * MILLIS_RATIO;
-			}
+	}
 
-			SaveCustomLevel save = new SaveCustomLevel("src\\main\\resources\\levels\\created_levels\\" + newLevelName,
-					width, height, tileMap, maxRats, parTime, dropRates);
-
-			if (save.wasSaved()) {
-				makeScreenShot(newLevelName);
-				System.out.println("Screenshot was saved");
-
-				HighScores.createNewLevel(newLevelName);
-				ProfileFileReader.createNewLevel(newLevelName);
-				MAIN_MENU.finishLevel();
-			} else {
-				savingErrorText.setText("Level name already exists.");
-				changeToAdultRats();
-				for (int i = 0; i < dropRates.length; i++) {
-					dropRates[i] = dropRates[i] / MILLIS_RATIO;
-				}
+	/**
+	 * Changes name of a level.
+	 * @param client
+	 * @param inputs
+	 */
+	public void changeName(Socket client, String[] inputs) {
+		System.out.println("    change menu function is called. : " + inputs);
+		if (inputs.length > 2) {
+			getClientOutputByClient(client).sendLevelNameMessage("Level name cannot contain spaces");
+		} else if (inputs.length == 1) {
+			getClientOutputByClient(client).sendLevelNameMessage("Level name cannot be empty");
+		} else if (inputs[1].matches(defaultLevelRegex)) {
+			getClientOutputByClient(client).sendLevelNameMessage("Level name cannot be the same as default level");
+		} else if (doesLevelExist(inputs[1])) {
+			getClientOutputByClient(client).sendLevelNameMessage("Level name already exist");
+		} else {
+			levelName = inputs[1];
+			this.setAllNotReady();
+			for (EditorServerThreadObjectOutput est : clientsObjectsOutputs) {
+				est.sendLevelNameMessage(levelName);
 			}
 		}
+	}
+
+	/**
+	 * Checks if level name already exist.
+	 * @param levelName level name
+	 * @return	true if level exist false otherwise
+	 */
+	private boolean doesLevelExist(String levelName) {
+		File directoryPath = new File("src/main/resources/server_levels/created_levels");
+
+		// List of all files and directories
+		String[] contents = directoryPath.list();
+
+		assert contents != null;
+		for (String content : contents) {
+			String substring = content.substring(0, content.length() - 4);
+			if (substring.equals(levelName)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Gets client output by client.
+	 * @param client
+	 * @return client output
+	 */
+	private EditorServerThreadObjectOutput getClientOutputByClient(Socket client) {
+		for (EditorServerThreadObjectOutput c : clientsObjectsOutputs) {
+			if (c.getClient().equals(client)) {
+				return c;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Gets client input by client.
+	 * @param client
+	 * @return client input
+	 */
+	private EditorServerThreadInput getClientInputByClient(Socket client) {
+		for (EditorServerThreadInput c : clientsInputs) {
+			if (c.getClient().equals(client)) {
+				return c;
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -888,8 +1054,57 @@ public class EditorServer {
 		try {
 			ImageIO.write(SwingFXUtils.fromFXImage(writableImage, null), "png", file);
 		} catch (Throwable th) {
-			// TODO: handle this exception
 		}
 
 	}
+
+	@Override
+	public Tile getTileAt(int x, int y) {
+		return null;
+	}
+
+	@Override
+	public void ratKilled(Rat rat) {
+
+	}
+
+	@Override
+	public void ratAdded(Rat rat) {
+
+	}
+
+	@Override
+	public void ratRemoved(Rat rat) {
+	}
+
+	@Override
+	public int[] getCounters() {
+		return null;
+	}
+
+	@Override
+	public int getCurrentTimeLeft() {
+		return 0;
+	}
+
+	@Override
+	public void addPowersFromSave(int[] inProgInv) {
+
+	}
+
+	/**
+	 * Remove client form a list of clients.
+	 * @param client client
+	 */
+	public void clientLeaving(Socket client) {
+		System.out.println("Client leaving");
+		clients.remove(client);
+		int index = this.clientsInputs.indexOf(this.getClientInputByClient(client));
+		this.clientsInputs.remove(index);
+		this.clientsObjectsOutputs.remove(index);
+		this.clientsInputsThreads.get(index).interrupt();
+		this.clientsInputsThreads.remove(index);
+		this.setAllNotReady();
+	}
+
 }

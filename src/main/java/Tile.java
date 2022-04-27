@@ -16,9 +16,9 @@ public class Tile extends GameObject {
      * @param activePowers What powers are active on this tile.
      * @param occupantRats What rats are present on this tile.
      */
-    public Tile(boolean isPassable, ArrayList<Power> activePowers,
+    public Tile(Controller controller, boolean isPassable, ArrayList<Power> activePowers,
                 ArrayList<Rat> occupantRats) {
-        super(isPassable);
+        super(isPassable, controller);
         this.activePowers = activePowers;
         this.occupantRats = occupantRats;
     }

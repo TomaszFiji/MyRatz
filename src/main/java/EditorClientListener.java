@@ -5,6 +5,8 @@ import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.net.Socket;
 
+import javafx.application.Platform;
+
 public class EditorClientListener implements Runnable {
 
 	private Socket server;
@@ -23,23 +25,36 @@ public class EditorClientListener implements Runnable {
 		try {
 			while (true) {
 
+				System.out.println("\nnew listener client loop");
 				Object temp = inObject.readObject();
 				if (temp instanceof Tile[][] && temp != null) {
-					editorClient.setTileMap((Tile[][]) temp);
+					System.out.println("map");
+					Platform.runLater(() -> {
+						editorClient.setTileMap((Tile[][]) temp);
+					});
 				} else if (temp instanceof Settings) {
-					editorClient.saveSettings((Settings) temp);
+					System.out.println("settings");
+					Platform.runLater(() -> {
+						editorClient.saveSettings((Settings) temp);
+					});
+				} else if (temp instanceof Boolean) {
+					System.out.println("boolean: " + temp);
+					Platform.runLater(() -> {
+						editorClient.setReady((Boolean) temp);
+					});
+				} else if (temp instanceof ReadyStatus) {
+					System.out.println("readystatus");
+					Platform.runLater(() -> {
+						editorClient.setReadyStatus((ReadyStatus) temp);
+					});
+				} else if (temp instanceof String) {
+					System.out.println("string: " + (String) temp);
+					Platform.runLater(() -> {
+						editorClient.changeLevelName((String) temp);
+					});
 				}
-//				for (int i = 0; i < tileMap.length; i++) {
-//					for (int j = 0; j < tileMap[i].length; j++) {
-//						System.out.print(tileMap[i][j].getClass().getName() + " ");
-//					}
-//					System.out.println();
-//				}
-//				System.out.println(editorClient.getTileMap() + "   " + tileMap.equals(editorClient.getTileMap()) + "   "
-//						+ tileMap);
 			}
 		} catch (IOException | ClassNotFoundException e) {
-			//e.printStackTrace();
 			System.err.println(e);
 		}
 

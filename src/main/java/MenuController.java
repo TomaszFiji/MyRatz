@@ -1,12 +1,20 @@
 import static java.lang.Integer.parseInt;
+
+import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.Scanner;
 
+import javax.imageio.ImageIO;
+
+import javafx.animation.FadeTransition;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -14,6 +22,9 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.SnapshotParameters;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.RadioButton;
@@ -21,12 +32,16 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.image.WritableImage;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 /**
  * Class to control main menu.
@@ -45,11 +60,6 @@ public class MenuController {
 	private static String selectedLevelName = "";
 	private static String selectedEditLevelName = "";
 	private static String clientSelectedLevelName = "";
-//	private static boolean menuViewUpdated = false;
-//	private static boolean serverViewUpdated = false;
-//	private static boolean profilesViewUpdated = false;
-//	private static boolean levelsViewUpdated = false;
-//	private static boolean levelsCreationViewUpdated = false;
 	private static final int MAX_WIDTH_CREATION = 390;
 	private static final int MAX_HEIGHT_CREATION = 350;
 	private static final int MAX_WIDTH_SELECTION = 180;
@@ -71,6 +81,9 @@ public class MenuController {
 	private static final String SELECT_LEVEL_LABEL = "Select level";
 	private Server server;
 	private static Client client;
+	private static CooperationClient cooperationClient;
+	private static EditorClient editorClient;
+	private static String lastScene = "menu";
 
 	@FXML
 	private Label messageOfTheDay;
@@ -88,6 +101,8 @@ public class MenuController {
 	private ImageView levelView;
 	@FXML
 	private ImageView levelViewSelection;
+	@FXML
+	private ImageView clientLevelView;
 	@FXML
 	private Button deleteLevelButton;
 	@FXML
@@ -165,9 +180,15 @@ public class MenuController {
 	@FXML
 	private Button playTheGameClientButton;
 	@FXML
+	private Button downloadMapButtonClient;
+	@FXML
 	private RadioButton sabotageClientRadioButton;
 	@FXML
 	private Label selectedLevelHeadingClientLabel;
+	@FXML
+	private Text downloadingLevelText;
+	@FXML
+	private Canvas clientLevelCanvas;
 
 	/**
 	 * Method initialize initial state of each scene.
@@ -178,26 +199,23 @@ public class MenuController {
 	@FXML
 	private void initialize() throws IOException, InterruptedException {
 		if (this.profileSelectionRoot != null) {
-			// profilesViewUpdated = false;
 			updateProfilesView();
 		} else if (this.menuRoot != null) {
-//			stage = Menu.getStage();
-//			scene = stage.getScene();
-			// menuViewUpdated = false;
 			updateMenuView();
 		} else if (this.serverRoot != null) {
-			// serverViewUpdated = false;
+			lastScene = "server";
 			updateServerView();
 		} else if (this.levelsSelectionRoot != null) {
-			// levelsViewUpdated = false;
+			lastScene = "levelSelection";
 			defaultLevelsRadioButton.getStyleClass().remove("radio-button");
 			defaultLevelsRadioButton.getStyleClass().add("toggle-button");
 			selectedLevelHeadingLabel.setAlignment(Pos.CENTER);
 			updateLevelsView();
 		} else if (this.levelCreationRoot != null) {
-			// levelsCreationViewUpdated = false;
+			lastScene = "levelCreation";
 			updateLevelCreationView();
 		} else if (this.clientLevelsSelectionRoot != null) {
+			lastScene = "clientLevelSelection";
 			updateClientLevelSelection();
 		}
 	}
@@ -238,7 +256,6 @@ public class MenuController {
 	 */
 	public void changeToMenu(ActionEvent event) throws IOException {
 		System.out.println("move to menu");
-//		menuViewUpdated = false;
 		root = FXMLLoader.load(getClass().getResource("menu2.fxml"));
 		stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
 		scene = new Scene(root);
@@ -250,8 +267,6 @@ public class MenuController {
 	 * Updates menu with name of logged profile.
 	 */
 	public void updateMenuView() {
-//		if (!menuViewUpdated) {
-//			menuViewUpdated = true;
 		messageOfTheDay.setMaxWidth(700);
 		messageOfTheDay.setText(MOTD.GETMotd());
 		if (ProfileFileReader.getLoggedProfile() != null) {
@@ -259,7 +274,6 @@ public class MenuController {
 		} else {
 			loggedProfileMenuLabel.setText("You are not logged in. Please select profile");
 		}
-//		}
 	}
 
 	/**
@@ -269,7 +283,6 @@ public class MenuController {
 	 * @throws IOException if fxml file is missing
 	 */
 	public void changeToLevelCreation(ActionEvent event) throws IOException {
-//		levelsCreationViewUpdated = false;
 		System.out.println("moved to level creation");
 
 		root = FXMLLoader.load(Objects.requireNonNull(getClass().getResource("levelCreation.fxml")));
@@ -288,7 +301,6 @@ public class MenuController {
 	 */
 	public void changeToLevelSelection(ActionEvent event) throws IOException {
 		if (ProfileFileReader.getLoggedProfile() != null) {
-//			levelsViewUpdated = false;
 			System.out.println("moved to level selection");
 
 			root = FXMLLoader.load(getClass().getResource("levelsSelection.fxml"));
@@ -309,7 +321,6 @@ public class MenuController {
 	 * @throws IOException if fxml file is missing
 	 */
 	public void changeToProfileSelection(ActionEvent event) throws IOException {
-//		profilesViewUpdated = false;
 		System.out.println("moved to profile selection");
 
 		Parent root = FXMLLoader.load(getClass().getResource("profileSelection.fxml"));
@@ -343,7 +354,6 @@ public class MenuController {
 				ProfileFileReader.loginProfile(newProfileTextField.getText());
 
 				newProfileTextField.setText("");
-//				profilesViewUpdated = false;
 				this.updateProfilesView();
 
 			} else if (!newProfileTextField.getText().equals("")) {
@@ -371,7 +381,6 @@ public class MenuController {
 			ProfileFileReader.logout();
 			HighScores.deleteProfile(ProfileFileReader.getLoggedProfile());
 
-//			profilesViewUpdated = false;
 			this.updateProfilesView();
 		}
 	}
@@ -380,8 +389,6 @@ public class MenuController {
 	 * Update screen. Add buttons, logged profile label, and best scores.
 	 */
 	public void updateProfilesView() {
-//		if (!profilesViewUpdated) {
-//			profilesViewUpdated = true;
 
 		updateProfilesScoreTable();
 
@@ -405,7 +412,6 @@ public class MenuController {
 			// Adds the action for each button
 			profButton[i].setOnAction(event -> {
 				ProfileFileReader.loginProfile(profButton[buttonIndex].getText());
-//					profilesViewUpdated = false;
 				updateProfilesView();
 			});
 		}
@@ -452,8 +458,6 @@ public class MenuController {
 	 * Updates buttons and score table in level selection menu.
 	 */
 	public void updateLevelsView() {
-//		if (!levelsViewUpdated) {
-//			levelsViewUpdated = true;
 
 		levelButtonsVBox.getChildren().clear();
 		levelViewSelection.setImage(null);
@@ -516,7 +520,6 @@ public class MenuController {
 				}
 			}
 		}
-//		}
 	}
 
 	/**
@@ -587,7 +590,6 @@ public class MenuController {
 		imageToDelete.delete();
 
 		selectedLevelName = "";
-//		levelsViewUpdated = false;
 		updateLevelsView();
 	}
 
@@ -612,7 +614,6 @@ public class MenuController {
 	 * Change type of level buttons displayed.
 	 */
 	public void levelTypeChanged() {
-//		levelsViewUpdated = false;
 		selectedLevelName = "";
 		selectedLevelHeadingLabel.setText(SELECT_LEVEL_LABEL);
 		updateLevelsView();
@@ -628,18 +629,20 @@ public class MenuController {
 
 		if (defaultLevelsRadioButton.isSelected()) {
 			levelType = "default_levels/";
-			LevelFileReader.loadNormalLevelFile("src/main/resources/levels/" + levelType + selectedLevelName, true);
+			LevelFileReader.loadNormalLevelFile(null, "src/main/resources/levels/" + levelType + selectedLevelName,
+					true);
 		} else if (createdLevelsRadioButton.isSelected()) {
 			levelType = "created_levels/";
-			LevelFileReader.loadNormalLevelFile("src/main/resources/levels/" + levelType + selectedLevelName, true);
+			LevelFileReader.loadNormalLevelFile(null, "src/main/resources/levels/" + levelType + selectedLevelName,
+					true);
 		} else if (savedGamesRadioButton.isSelected()) {
 			levelType = "saved_games/" + ProfileFileReader.getLoggedProfile() + "/";
-			LevelFileReader.loadSavedLevelFile("src/main/resources/levels/" + levelType + selectedLevelName);
+			LevelFileReader.loadSavedLevelFile(null, "src/main/resources/levels/" + levelType + selectedLevelName);
 		}
-
-		FXMLLoader loader = new FXMLLoader(getClass().getResource("level.fxml"));
 		LevelController levelController = new LevelController(selectedLevelName, this);
 
+		FXMLLoader loader = new FXMLLoader(getClass().getResource("level.fxml"));
+		levelController.ratRemoved(null);
 		loader.setController(levelController);
 		Pane root = loader.load();
 
@@ -653,7 +656,15 @@ public class MenuController {
 	public void finishLevel() {
 		Parent root = null;
 		try {
-			root = FXMLLoader.load(getClass().getResource("menu2.fxml"));
+			if (lastScene.equals("levelSelection")) {
+				root = FXMLLoader.load(getClass().getResource("levelSelection.fxml"));
+			} else if (lastScene.equals("levelCreation")) {
+				root = FXMLLoader.load(getClass().getResource("levelCreation.fxml"));
+			} else if (lastScene.equals("clientLevelSelection")) {
+				root = FXMLLoader.load(getClass().getResource("clientLevelSelection.fxml"));
+			} else {
+				root = FXMLLoader.load(getClass().getResource("menu2.fxml"));
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -671,8 +682,6 @@ public class MenuController {
 	 */
 	@FXML
 	public void updateLevelCreationView() {
-//		if (!levelsCreationViewUpdated) {
-//			levelsCreationViewUpdated = true;
 
 		levelsButtonsLevelCreationVBox.getChildren().clear();
 		levelView.setImage(null);
@@ -680,8 +689,6 @@ public class MenuController {
 		ArrayList<String> levelNames = null;
 		Button[] levelButtons;
 
-		// Checking which radio button is selected
-		// to display level buttons
 		if (editDefaultLevelsRadioButton.isSelected()) {
 			levelNames = ProfileFileReader.getDefaultLevelsNames();
 			selectRadioButton(editDefaultLevelsRadioButton, editCustomLevelsRadioButton, editCustomLevelsRadioButton);
@@ -719,7 +726,6 @@ public class MenuController {
 				levelView.setImage(getPreview(selectedEditLevelName, false, MAX_WIDTH_CREATION, MAX_HEIGHT_CREATION));
 			});
 		}
-//		}
 	}
 
 	/**
@@ -732,14 +738,14 @@ public class MenuController {
 		FXMLLoader loader = new FXMLLoader(getClass().getResource("editor.fxml"));
 
 		if (editDefaultLevelsRadioButton.isSelected()) {
-			LevelFileReader.loadNormalLevelFile("src/main/resources/levels/default_levels/" + selectedEditLevelName,
-					true);
+			LevelFileReader.loadNormalLevelFile(null,
+					"src/main/resources/levels/default_levels/" + selectedEditLevelName, true);
 		} else if (editCustomLevelsRadioButton.isSelected()) {
-			LevelFileReader.loadNormalLevelFile("src/main/resources/levels/created_levels/" + selectedEditLevelName,
-					true);
+			LevelFileReader.loadNormalLevelFile(null,
+					"src/main/resources/levels/created_levels/" + selectedEditLevelName, true);
 		}
-
 		EditorController editorController = new EditorController(selectedEditLevelName, this);
+
 		loader.setController(editorController);
 		Pane root = loader.load();
 
@@ -764,7 +770,6 @@ public class MenuController {
 		ProfileFileReader.deleteLevel(selectedEditLevelName);
 		HighScores.deleteLevel(selectedEditLevelName);
 		deleteLevelButton.setDisable(true);
-//		levelsCreationViewUpdated = false;
 		updateLevelCreationView();
 	}
 
@@ -776,7 +781,6 @@ public class MenuController {
 
 		deleteLevelButton.setDisable(true);
 		editCreatedLevelButton.setDisable(true);
-//		levelsCreationViewUpdated = false;
 		selectedEditLevelName = "";
 		updateLevelCreationView();
 	}
@@ -814,31 +818,53 @@ public class MenuController {
 		Menu.getStage().close();
 	}
 
+	/**
+	 * Runs a server.
+	 * 
+	 * @throws IOException
+	 */
 	public void runServer(ActionEvent event) throws IOException {
 		System.out.println("move to server");
-		/*
-		 * root = FXMLLoader.load(getClass().getResource("serverRunningScene.fxml"));
-		 * stage = (Stage) ((Node) event.getSource()).getScene().getWindow(); scene =
-		 * new Scene(root); stage.setScene(scene); stage.show();
-		 */
-		
-//		System.out.println("run server");
-		changeToMenu(event);
-		CooperationServer s = new CooperationServer("level-3",this, scene, stage);
-		s.runTheGame();
+
+		root = FXMLLoader.load(getClass().getResource("serverRunningScene.fxml"));
+		stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+		scene = new Scene(root);
+		stage.setScene(scene);
+		stage.show();
 	}
 
+	/**
+	 * Updates IP address and port number in server view.
+	 * 
+	 * @throws IOException
+	 */
 	private void updateServerView() throws IOException {
 		server = new Server(this, scene, stage);
 		serverIPLabel.setText(InetAddress.getLocalHost().getHostAddress());
 		serverPortLabel.setText(Integer.toString(server.getPort()));
-//		serverViewUpdated = true;
 	}
 
+	/**
+	 * Restarts game server on a server
+	 * 
+	 * @param levelName     name of a new level
+	 * @param baseLevelName name of played level
+	 * @param levelType     type of played level
+	 * @param serverType    type of played server
+	 */
+	public void finishServerGame(String levelName, String baseLevelName, String levelType, String serverType) {
+		server.restartGameServer(baseLevelName, levelType, serverType);
+		server.addNewGameServer(levelName);
+	}
+
+	/**
+	 * Closes theh server.
+	 * 
+	 * @throws IOException
+	 */
 	public void closeServer(ActionEvent event) throws IOException {
 		System.out.println("move to menu");
 		server.closeServer();
-//		menuViewUpdated = false;
 		root = FXMLLoader.load(getClass().getResource("menu2.fxml"));
 		stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
 		scene = new Scene(root);
@@ -846,71 +872,67 @@ public class MenuController {
 		stage.show();
 	}
 
+	/**
+	 * Switch to client searching for server view.
+	 * 
+	 * @param event
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 * @throws InterruptedException
+	 */
 	public void runClient(ActionEvent event) throws IOException, ClassNotFoundException, InterruptedException {
 		System.out.println("move to search for server");
-		// serverViewUpdated = false;
 		root = FXMLLoader.load(getClass().getResource("clientSearchingForServer.fxml"));
 		stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
 		scene = new Scene(root);
 		stage.setScene(scene);
 		stage.show();
-//		System.out.println("run client");
-//		changeToMenu(event);
-//		EditorClient c = new EditorClient(this);
-//		c.runTheGame("level-3", true, scene, stage, this);
-//		c.runClient();
 	}
 
-	@FXML
-	public void searchForServer(ActionEvent event) throws NumberFormatException, UnknownHostException, IOException {
-		// try {
-		Client client = new Client(searchForIPTextField.getText(), parseInt(searchForPortTextField.getText()));
-		this.client = client;
-		if (this.client == null) {
-			System.out.println("this.client is null");
-		} else {
-			System.out.println("this.client is not null");
-		}
-		if (client == null) {
-			System.out.println("client is null");
-		} else {
-			System.out.println("client is not null");
-			changeToClientLevelSelection(event);
-		}
+	/**
+	 * Tries to connect to a server.
+	 * 
+	 * @param event
+	 * @throws IOException 
+	 */
+	public void searchForServer(ActionEvent event) throws IOException {
+//		Client client;
+//		try {
+			client = new Client(searchForIPTextField.getText(), parseInt(searchForPortTextField.getText()));
+
+			MenuController.client = client;
+			if (MenuController.client == null) {
+				System.out.println("this.client is null");
+			} else {
+				System.out.println("this.client is not null");
+				changeToClientLevelSelection(event);
+			}
 //		} catch (Exception e) {
 //			cantFindServerLabel.setText("Can't connect to this server");
 //		}
 	}
 
+	/**
+	 * Switch to client level selection view.
+	 * 
+	 * @param event
+	 * @throws IOException
+	 */
 	public void changeToClientLevelSelection(ActionEvent event) throws IOException {
-
-		System.out.println("move to search for server");
-		if (this.client == null) {
-			System.out.println("this.client is null");
-		} else {
-			System.out.println("this.client is not null");
-		}
-		// serverViewUpdated = false;
-		System.out.println("ttest0");
 		root = FXMLLoader.load(getClass().getResource("clientLevelSelection.fxml"));
-		System.out.println("ttest1");
 		stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-		System.out.println("ttest2");
 		scene = new Scene(root);
-		System.out.println("ttest3");
 		stage.setScene(scene);
-		System.out.println("ttest4");
 		stage.show();
-		System.out.println("ttest5");
-		if (this.client == null) {
-			System.out.println("this.client is null aft1");
-		} else {
-			System.out.println("this.client is not null aft1");
-		}
 	}
 
+	/**
+	 * Updates client level selection view.
+	 * 
+	 * @throws InterruptedException
+	 */
 	public void updateClientLevelSelection() throws InterruptedException {
-		if (this.client == null) {
+		if (MenuController.client == null) {
 			System.out.println("this.client is null in update");
 		} else {
 			System.out.println("this.client is not null in update");
@@ -921,40 +943,26 @@ public class MenuController {
 
 		// Checking which radio button is selected
 		// to choose type of levels to display
+		deleteButtonClient.setDisable(true);
+		downloadMapButtonClient.setDisable(true);
+		playTheGameClientButton.setDisable(true);
+		System.out.println("Asking for level names");
 		if (defaultLevelsClientRadioButton.isSelected()) {
 
-			// TODO : implement these methods
 			levelNames = client.getDefaultLevelsNames();
 			selectRadioButton(defaultLevelsClientRadioButton, createdLevelsClientRadioButton,
 					createdLevelsClientRadioButton);
-
-			deleteButtonClient.setDisable(true);
-
 		} else if (createdLevelsClientRadioButton.isSelected()) {
 
 			levelNames = client.getCreatedLevelsNames();
 			selectRadioButton(createdLevelsClientRadioButton, defaultLevelsClientRadioButton,
 					defaultLevelsClientRadioButton);
-
-			deleteButtonClient.setDisable(true);
 		}
 
 		if (cooperationClientRadioButton.isSelected()) {
-
-			selectRadioButton(cooperationClientRadioButton, sabotageClientRadioButton, mapCreationClientRadioButton);
-
-			deleteButtonClient.setDisable(true);
-
-		} else if (sabotageClientRadioButton.isSelected()) {
-
-			selectRadioButton(sabotageClientRadioButton, cooperationClientRadioButton, mapCreationClientRadioButton);
-
-			deleteButtonClient.setDisable(true);
+			selectRadioButton(cooperationClientRadioButton, mapCreationClientRadioButton, mapCreationClientRadioButton);
 		} else if (mapCreationClientRadioButton.isSelected()) {
-
-			selectRadioButton(mapCreationClientRadioButton, cooperationClientRadioButton, sabotageClientRadioButton);
-
-			deleteButtonClient.setDisable(true);
+			selectRadioButton(mapCreationClientRadioButton, cooperationClientRadioButton, cooperationClientRadioButton);
 		}
 
 		levelButtons = new Button[levelNames.size()];
@@ -971,42 +979,257 @@ public class MenuController {
 			final int buttonIndex = i;
 
 			levelButtons[i].setOnAction(event -> {
+				if (createdLevelsClientRadioButton.isSelected()) {
+					deleteButtonClient.setDisable(false);
+					downloadMapButtonClient.setDisable(false);
+				}
+				playTheGameClientButton.setDisable(false);
 				// attaching action to each button
 				selectedLevelHeadingClientLabel.setText(levelButtons[buttonIndex].getText());
 				clientSelectedLevelName = levelButtons[buttonIndex].getText();
+				try {
+					if (createdLevelsClientRadioButton.isSelected()) {
+						clientLevelView.setImage(this.getScreenShot(
+								client.downloadMap(levelButtons[buttonIndex].getText(), "created_levels"), false));
+					} else {
+						clientLevelView.setImage(this.getScreenShot(
+								client.downloadMap(levelButtons[buttonIndex].getText(), "default_levels"), false));
+					}
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 			});
 		}
 	}
 
-	@FXML
-	public void deleteButtonClient(ActionEvent event) {
-
+	/**
+	 * Ask for deleting selected level on the server.
+	 * 
+	 * @param event
+	 * @throws InterruptedException
+	 */
+	public void deleteButtonClient(ActionEvent event) throws InterruptedException {
+		boolean temp = client.deleteLevel(clientSelectedLevelName);
+		System.out.println("delete button pressed " + temp);
+		if (temp) {
+			selectedLevelHeadingClientLabel.setText("Select Level");
+			clientSelectedLevelName = "";
+			this.updateClientLevelSelection();
+		}
 	}
 
-	@FXML
-	public void levelTypeChanged(ActionEvent event) {
-
+	/**
+	 * Gets cooperation client.
+	 * 
+	 * @return cooperation client
+	 */
+	public static CooperationClient getCooperationClient() {
+		return MenuController.cooperationClient;
 	}
 
+	/**
+	 * Gets editor client.
+	 * 
+	 * @return editor client
+	 */
+	public static EditorClient getEditorClient() {
+		return MenuController.editorClient;
+	}
+
+	/**
+	 * Runs selected by client game.
+	 * 
+	 * @param event
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 * @throws InterruptedException
+	 */
 	@FXML
 	void playTheGameClient(ActionEvent event) throws IOException, ClassNotFoundException, InterruptedException {
+		String temp = clientSelectedLevelName;
+		if (defaultLevelsClientRadioButton.isSelected()) {
+			temp += " default";
+		} else if (createdLevelsClientRadioButton.isSelected()) {
+			temp += " created";
+		}
 
-		int port = client.getPort(clientSelectedLevelName);
+		if (cooperationClientRadioButton.isSelected()) {
+			temp += " cooperation";
+		} else if (mapCreationClientRadioButton.isSelected()) {
+			temp += " editor";
+		}
+		int port = client.getPort(temp);
 		System.out.println("run client " + port);
-		// changeToMenu(event);
-		EditorClient c = new EditorClient(this);
-		c.runTheGame("level-3", true, scene, stage, this);
-		c.runClient(port);
+
+		if (port != 0) {
+			if (cooperationClientRadioButton.isSelected()) {
+				cooperationClient = new CooperationClient(clientSelectedLevelName, this, scene, stage);
+				cooperationClient.runTheGame("level-3", true, scene, stage, this);
+				cooperationClient.runClient(port);
+			} else if (mapCreationClientRadioButton.isSelected()) {
+				editorClient = new EditorClient(this);
+				editorClient.runTheGame("level-3", true, scene, stage, this);
+				editorClient.runClient(port);
+			}
+		} else {
+			System.out.println("port is 0");
+		}
 	}
 
+	/**
+	 * Changes the behavior of radio buttons and updates client level selection
+	 * view.
+	 * 
+	 * @param event
+	 * @throws InterruptedException
+	 */
 	@FXML
 	void clientLevelTypeChanged(ActionEvent event) throws InterruptedException {
+		clientSelectedLevelName = "";
+		selectedLevelHeadingClientLabel.setText(SELECT_LEVEL_LABEL);
 		updateClientLevelSelection();
 	}
 
+	/**
+	 * Updates client level selection view according to selected gamemode.
+	 * 
+	 * @param event
+	 * @throws InterruptedException
+	 */
 	@FXML
 	void clientGamemodeTypeChanged(ActionEvent event) throws InterruptedException {
 		updateClientLevelSelection();
 	}
 
+	/**
+	 * Downloads the map from server and saves it on client computer.
+	 * 
+	 * @param event
+	 * @throws InterruptedException
+	 */
+	@FXML
+	void downloadMap(ActionEvent event) throws InterruptedException {
+		String mapString = client.downloadMap(clientSelectedLevelName, "created_levels");
+		System.out.println(mapString);
+
+		try {
+			File f = new File("src\\main\\resources\\levels\\created_levels\\" + clientSelectedLevelName + ".txt");
+			if (f.createNewFile()) {
+				System.out.println("Created new file " + clientSelectedLevelName);
+
+				FileWriter p = new FileWriter(
+						"src\\main\\resources\\levels\\created_levels\\" + clientSelectedLevelName + ".txt");
+				p.write(mapString);
+				p.close();
+				downloadingLevelText.setText("downoloaded: " + clientSelectedLevelName);
+				this.getScreenShot(client.downloadMap(clientSelectedLevelName, "created_levels"), true);
+			} else {
+				System.out.println("Already exists");
+				downloadingLevelText.setText("map already exist on your computer");
+			}
+		} catch (IOException e) {
+			downloadingLevelText.setText("An error occurred");
+			System.out.println("An error occurred");
+		}
+		applyFadingEffect(downloadingLevelText);
+	}
+
+	/**
+	 * Applies fading effect to selected node.
+	 * 
+	 * @param node node for effect to apply
+	 */
+	private void applyFadingEffect(Node node) {
+		FadeTransition ft = new FadeTransition(Duration.millis(3000), node);
+		ft.setFromValue(1.0);
+		ft.setToValue(0.0);
+		ft.play();
+	}
+
+	/**
+	 * Generate map preview from content of map file and eventually saves it on
+	 * client computer.
+	 * 
+	 * @param map		content of the map file
+	 * @param toBeSaved	true if map should be saved
+	 * @return			image of map preview
+	 */
+	private Image getScreenShot(String map, boolean toBeSaved) {
+		System.out.println(map);
+		Scanner reader = new Scanner(map);
+
+		int width = 0;
+		int height = 0;
+
+		if (reader.hasNextLine()) {
+			String[] levelStats = reader.nextLine().split(",");
+			width = Integer.parseInt(levelStats[0]);
+			height = Integer.parseInt(levelStats[1]);
+		}
+
+		reader.nextLine().split(",");
+
+		String currentTiles = "";
+		for (int i = 0; i < height; i++) {
+			if (reader.hasNext()) {
+				currentTiles = currentTiles.concat(reader.nextLine());
+			}
+		}
+
+		String[] tiles = currentTiles.split("(?<=\\G.{" + width + "})");
+
+		Tile[][] tileMap = LevelFileReader.tilesToTileMap(tiles, width, height);
+		System.out.println(tileMap);
+
+		while (reader.hasNextLine()) {
+			String[] currentItem = reader.nextLine().replaceAll("[()]", "").split(",");
+			int directionInt = Integer.parseInt(currentItem[2]);
+			Rat.Direction direction = LevelFileReader.directionIntToEnum(directionInt);
+			int xPos = Integer.parseInt(currentItem[4]);
+			int yPos = Integer.parseInt(currentItem[5]);
+			Rat newRat = null;
+			switch (currentItem[0]) {
+			case "f":
+			case "F":
+				newRat = new AdultFemale(null, 0, direction, 0, xPos, yPos, false, 0, 0);
+				break;
+			case "m":
+			case "M":
+				newRat = new AdultMale(null, 0, direction, 0, xPos, yPos, false);
+				break;
+			case "i":
+			case "I":
+				newRat = new AdultIntersex(null, 0, direction, 0, xPos, yPos, false, 0, 0);
+				break;
+			}
+			tileMap[xPos][yPos].addOccupantRat(newRat);
+
+		}
+		reader.close();
+
+		Canvas canvas = new Canvas(1024, 896);
+		GraphicsContext gc = canvas.getGraphicsContext2D();
+
+		if (tileMap != null) {
+			for (int i = 0; i < tileMap.length; i++) {
+				for (int j = 0; j < tileMap[i].length; j++) {
+					tileMap[i][j].draw(i, j, gc);
+				}
+			}
+		}
+
+		WritableImage writableImage = new WritableImage(width * 64, height * 64);
+		SnapshotParameters params = new SnapshotParameters();
+		Image img = canvas.snapshot(params, writableImage);
+		System.out.println(img);
+		if (toBeSaved) {
+			try {
+				File file = new File("src\\main\\resources\\levels_images\\" + clientSelectedLevelName + ".png");
+				ImageIO.write(SwingFXUtils.fromFXImage(writableImage, null), "png", file);
+			} catch (Throwable th) {
+				System.out.println("problem with img saving");
+			}
+		}
+		return img;
+	}
 }

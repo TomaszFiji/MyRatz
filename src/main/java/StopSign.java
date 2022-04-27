@@ -27,8 +27,20 @@ public class StopSign extends Power {
      * @param yPos y coordinate.
      */
 
-    StopSign(int xPos, int yPos) {
-        super(true, xPos, yPos);
+    StopSign(Controller controller,int xPos, int yPos) {
+        super(controller, true, xPos, yPos);
+    }
+    
+    /**
+     * StopSign constructor with HP
+     *
+     * @param xPos x coordinate.
+     * @param yPos y coordinate.
+     */
+    
+    StopSign(Controller controller,int xPos, int yPos, int HP) {
+    	super(controller, true, xPos, yPos);
+    	this.HP = HP;
     }
 
     /**

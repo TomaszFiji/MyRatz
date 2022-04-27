@@ -15,7 +15,7 @@ import java.util.Objects;
  */
 public class Menu extends Application {
 
-	public static final int SERVER_PORT = 2209;
+	public static final int SERVER_PORT = 2215;
 	private static Stage rootStage = null;
 	private Scene scene;
 
@@ -43,6 +43,18 @@ public class Menu extends Application {
 			try {
 				ProfileFileReader.saveDataToFile();
 				HighScores.saveDataToFile();
+				try {
+					CooperationClient c = MenuController.getCooperationClient();
+					if (c != null) {
+						// TODO:
+					}
+					EditorClient e = MenuController.getEditorClient();
+					if (e != null) {
+						e.stageClosing();
+					}
+				} catch (Exception e) {
+
+				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

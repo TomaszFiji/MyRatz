@@ -18,9 +18,9 @@ public class AdultMale extends LivingRat {
      * @param yPos      where the rat is on the y-axis.
      * @param isFertile whether the rat can breed.
      */
-    public AdultMale(int speed, Direction direction, int gasTimer, int xPos,
+    public AdultMale(Controller controller, int speed, Direction direction, int gasTimer, int xPos,
                      int yPos, boolean isFertile) {
-        super(speed, direction, gasTimer, xPos, yPos, isFertile);
+        super(controller, speed, direction, gasTimer, xPos, yPos, isFertile);
     }
 
     /**
@@ -36,7 +36,7 @@ public class AdultMale extends LivingRat {
      */
     public void ratSexFunction() {
         if (this.isFertile) {
-            Tile currentTile = CooperationServer.getTileAt(xPos, yPos);
+            Tile currentTile = this.getController().getTileAt(xPos, yPos);
 
             assert currentTile != null;
             for (Rat currentRat : currentTile.getOccupantRats()) {

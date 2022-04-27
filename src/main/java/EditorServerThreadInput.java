@@ -17,7 +17,12 @@ public class EditorServerThreadInput implements Runnable {
 		this.isReady = false;
 		this.in = new BufferedReader(new InputStreamReader(client.getInputStream()));
 	}
+	
+	public Socket getClient() {
+		return this.client;
+	}
 
+	@Override
 	public void run() {
 		try {
 			while (true) {
@@ -39,10 +44,25 @@ public class EditorServerThreadInput implements Runnable {
 				case "settings":
 					this.server.saveSettings(inputs);
 					break;
+				case "readyStatus":
+					this.server.setReady(client, inputs[1]);
+					break;
+				case "levelName":
+					this.server.changeName(client, inputs);
+					break;
+				case "closing":
+					this.server.clientLeaving(client);
+					break;
 				}
+				
+				Thread.sleep(0);
 			}
-		} catch (IOException e) {
-			e.printStackTrace();
+		} catch (IOException | InterruptedException e) {
+			try {
+				this.in.close();
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
 		}
 
 	}

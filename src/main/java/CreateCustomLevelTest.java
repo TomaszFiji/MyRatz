@@ -24,8 +24,8 @@ public class CreateCustomLevelTest extends Application {
 		map[1][1] = p;
 		
 		
-		AdultMale r = new AdultMale(1, Rat.Direction.NORTH, 0, 1, 1, true);
-		AdultMale l = new AdultMale(1, Rat.Direction.NORTH, 0, 1, 1, false);
+		AdultMale r = new AdultMale(null, 1, Rat.Direction.NORTH, 0, 1, 1, true);
+		AdultMale l = new AdultMale(null, 1, Rat.Direction.NORTH, 0, 1, 1, false);
 		map[0][0].addOccupantRat(r);
 		map[1][1].addOccupantRat(l);
 		SaveCustomLevel s = new SaveCustomLevel("BEEFY STU inProgress", width, height, map, maxRats, parTime, dropRates);

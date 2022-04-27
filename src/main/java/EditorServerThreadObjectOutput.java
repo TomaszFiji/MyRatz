@@ -7,7 +7,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Random;
 
-public class EditorServerThreadObjectOutput implements Runnable {
+public class EditorServerThreadObjectOutput {
 	private EditorServer server;
 	private Socket client;
 	private ObjectOutputStream outObject = null;
@@ -19,8 +19,18 @@ public class EditorServerThreadObjectOutput implements Runnable {
 		this.isReady = false;
 		this.outObject = new ObjectOutputStream(client.getOutputStream());
 	}
+	
+	public void closeStream() {
+		try {
+			this.outObject.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 
-	public void run() {
+	
+	public Socket getClient() {
+		return client;
 	}
 
 	public void sendMap() {
@@ -38,6 +48,36 @@ public class EditorServerThreadObjectOutput implements Runnable {
 		try {
 			System.out.println("Sending settings");
 			outObject.writeObject(settings);
+			outObject.reset();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void setReady(Boolean isReady) {
+		try {
+			System.out.println("Sending ready " + isReady);
+			outObject.writeObject(isReady);
+			outObject.reset();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void sendReadyStatus(ReadyStatus readyStatus) {
+		try {
+			System.out.println("Sending ready status");
+			outObject.writeObject(readyStatus);
+			outObject.reset();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void sendLevelNameMessage(String levelName) {
+		try {
+			System.out.println("Sending level name message: " + levelName);
+			outObject.writeObject(levelName);
 			outObject.reset();
 		} catch (IOException e) {
 			e.printStackTrace();

@@ -28,10 +28,10 @@ public class AdultIntersex extends LivingRat {
      * @param pregnancyTime how long the rat has left being pregnant.
      * @param ratFetusCount how many baby rats the mother rat is carrying
      */
-    public AdultIntersex(int speed, Direction direction, int gasTimer,
+    public AdultIntersex(Controller controller, int speed, Direction direction, int gasTimer,
                          int xPos, int yPos, boolean isFertile,
                          int pregnancyTime, int ratFetusCount) {
-        super(speed, direction, gasTimer, xPos, yPos, isFertile);
+        super(controller, speed, direction, gasTimer, xPos, yPos, isFertile);
         this.pregnancyTime = pregnancyTime;
         this.pregnant = pregnancyTime > 0;
         this.ratFetusCount = ratFetusCount;
@@ -98,10 +98,10 @@ public class AdultIntersex extends LivingRat {
                 newSex = Sex.INTERSEX;
             }
 
-            ChildRat newBaby = new ChildRat(Rat.getDEFAULT_SPEED() / 2,
+            ChildRat newBaby = new ChildRat(this.getController(), Rat.getDEFAULT_SPEED() / 2,
                     direction, 0, xPos, yPos, true, 0, newSex);
-            LevelController.ratAdded(newBaby);
-            Objects.requireNonNull(LevelController.getTileAt(xPos, yPos)).
+            this.getController().ratAdded(newBaby);
+            Objects.requireNonNull(this.getController().getTileAt(xPos, yPos)).
                     addOccupantRat(newBaby);
         }
     }
@@ -111,7 +111,7 @@ public class AdultIntersex extends LivingRat {
      */
     public void ratSexFunction() {
         if (this.isFertile) {
-            Tile currentTile = LevelController.getTileAt(xPos, yPos);
+            Tile currentTile = this.getController().getTileAt(xPos, yPos);
 
             assert currentTile != null;
             for (Rat currentRat : currentTile.getOccupantRats()) {

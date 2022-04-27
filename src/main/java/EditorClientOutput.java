@@ -56,4 +56,19 @@ public class EditorClientOutput implements Runnable {
 		System.out.println("Sent: " + output);
 		out.println(output);
 	}
+	
+	public void setReady(boolean isReady) {
+		System.out.println("Sent: readyStatus " + isReady);
+		out.println("readyStatus " + isReady);
+	}
+
+	public void changeLevelName(String newName) {
+		System.out.println("Sent: levelName " + newName);
+		out.println("levelName " + newName);
+	}
+	
+	public void stageClosing() {
+		System.out.println("Sent: closing ");
+		out.println("closing");
+	}
 }

@@ -23,8 +23,17 @@ public abstract class GameObject implements Serializable {
 	 * @param isPassable can rats walk through.
 	 */
 	public GameObject(boolean isPassable, Controller controller) {
+		this.controller = controller;
 		this.isPassable = isPassable;
 		img = createTexturePath();
+	}
+	
+	public Controller getController() {
+		return this.controller;
+	}
+	
+	public void setController(Controller controller) {
+		this.controller = controller;
 	}
 
 	/**

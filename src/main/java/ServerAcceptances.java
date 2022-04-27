@@ -2,11 +2,13 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import javafx.application.Platform;
+
 public class ServerAcceptances implements Runnable {
-	private Server server;
+	private ServerInterface server;
 	private ServerSocket serverSocket;
 
-	public ServerAcceptances(Server server, ServerSocket serverSocket) {
+	public ServerAcceptances(ServerInterface server, ServerSocket serverSocket) {
 		this.server = server;
 		this.serverSocket = serverSocket;
 	}
@@ -15,7 +17,13 @@ public class ServerAcceptances implements Runnable {
 		while (true) {
 			try {
 				Socket client = serverSocket.accept();
-				server.addClient(client);
+				Platform.runLater(() -> {
+					try {
+						server.addClient(client);
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				});
 				System.out.println("clientAdded");
 			} catch (IOException e) {
 

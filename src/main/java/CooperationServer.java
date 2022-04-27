@@ -1,10 +1,22 @@
+import java.io.File;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import javax.imageio.ImageIO;
+
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.embed.swing.SwingFXUtils;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -14,43 +26,29 @@ import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
-import javafx.scene.input.*;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.DragEvent;
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
-import javafx.stage.Stage;
 import javafx.util.Duration;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
-
-import javax.imageio.ImageIO;
-
 /**
- * Class that implements a playable level.
+ * Class that implements a cooperation server.
  *
- * @author Vilija Pundyte
+ * @author Tomasz Fijalkowski
  * @version 1.0
  */
-
-public class CooperationServer {
-
+public class CooperationServer implements Controller, ServerInterface {
 	private static final int ITEM_NUM = 8;
 	private static final int TILE_SIZE = 64;
-	private static final int[] counters = new int[ITEM_NUM];
+	private final int[] counters = new int[ITEM_NUM];
 
 	private static final String defaultLevelRegex = "level-[1-5]";
 
-	// For sounds
-	private static final String DEATH_RAT_SOUND_1_PATH = "deathRatSound1.mp3";
-	private static final String DEATH_RAT_SOUND_2_PATH = "deathRatSound2.mp3";
-	private static final String DEATH_RAT_SOUND_3_PATH = "deathRatSound3.mp3";
-	private static final double SOUND_VOLUME_RAT = 0.1f;
 
 	// Game map
 	private Tile[][] tileMap = new Tile[0][0];
@@ -68,14 +66,15 @@ public class CooperationServer {
 	private Boolean powersImportedFromSave = true;
 
 	// Images for different game items
-	private final List<Image> itemImages = Arrays.asList((new Bomb(0, 0)).getImg(), (new Gas(0, 0, true)).getImg(),
-			(new Sterilisation(0, 0)).getImg(), (new Poison(0, 0)).getImg(), (new MaleSwapper(0, 0)).getImg(),
-			(new FemaleSwapper(0, 0)).getImg(), (new StopSign(0, 0)).getImg(),
-			(new DeathRat(0, Rat.Direction.WEST, 0, 0, 0, 0)).getImg());
+	private final List<Image> itemImages = Arrays.asList((new Bomb(this, 0, 0)).getImg(),
+			(new Gas(this, 0, 0, true)).getImg(), (new Sterilisation(this, 0, 0)).getImg(),
+			(new Poison(this, 0, 0)).getImg(), (new MaleSwapper(this, 0, 0)).getImg(),
+			(new FemaleSwapper(this, 0, 0)).getImg(), (new StopSign(this, 0, 0)).getImg(),
+			(new DeathRat(this, 0, Rat.Direction.WEST, 0, 0, 0, 0)).getImg());
 
 	// Size of game map
-	private int width;
-	private int height;
+	private int WIDTH;
+	private int HEIGHT;
 
 	// Game losing conditions (maximum number of rats, time taken for a level)
 	private int MAX_RATS;
@@ -84,7 +83,6 @@ public class CooperationServer {
 	private int[] DROP_RATES;
 	private int[] timeUntilDrop = new int[ITEM_NUM];
 
-	private final MenuController MAIN_MENU;
 	private final String LEVEL_NAME;
 
 	// Milliseconds between frames
@@ -98,9 +96,6 @@ public class CooperationServer {
 
 	@FXML
 	public Canvas levelCanvas; // Game map canvas
-
-	private Scene scene;
-	private Stage stage;
 
 	public Button saveLevelStateButton;
 
@@ -129,44 +124,125 @@ public class CooperationServer {
 	public Text savingErrorText;
 	public Button saveAndExitButton;
 
+	private ServerSocket cooperationServer;
+	private int port;
+	private ArrayList<CooperationServerThreadObjectOutput> clientsObjectsOutputs = new ArrayList<>();
+	private ArrayList<CooperationServerThreadInput> clientsInputs = new ArrayList<>();
+	private int counterOfClients;
+	private boolean isDefaultLevel;
+	private Server server;
+
 	/**
 	 * Constructor for LevelController class.
 	 *
 	 * @param selectedLevelName  Number of level being played.
 	 * @param mainMenuController Reference to the main menu controller.
 	 */
-	public CooperationServer(String levelName, MenuController mainMenuController, Scene scene, Stage stage) {
+	public CooperationServer(String selectedLevelName, Server server) {
 
-		this.scene = scene;
-		this.stage = stage;
-		this.LEVEL_NAME = levelName;
-		MAIN_MENU = mainMenuController;
+		this.isDefaultLevel = selectedLevelName.matches(defaultLevelRegex);
+		LEVEL_NAME = selectedLevelName;
+		this.server = server;
 	}
 
-	public synchronized Tile[][] getTileMap() throws InterruptedException {
+	/**
+	 * Runs a cooperation client.
+	 * @throws IOException
+	 */
+	public void runServer() throws IOException {
+		cooperationServer = new ServerSocket(0);
+		System.out.println(cooperationServer.getLocalSocketAddress() + " " + InetAddress.getLocalHost().getHostAddress()
+				+ " " + cooperationServer.getLocalPort() + " " + this.LEVEL_NAME);
+		this.port = cooperationServer.getLocalPort();
+
+		System.out.println("initializing");
+		ServerAcceptances esa = new ServerAcceptances(this, cooperationServer);
+		Thread esaThread = new Thread(esa);
+		esaThread.start();
+	}
+
+	/**
+	 * Adds a client to a server.
+	 */
+	public void addClient(Socket client) throws IOException {
+		CooperationServerThreadObjectOutput clientOutput = new CooperationServerThreadObjectOutput(this, client);
+		CooperationServerThreadInput clientInput = new CooperationServerThreadInput(this, client);
+
+		clientsObjectsOutputs.add(clientOutput);
+		clientsInputs.add(clientInput);
+
+		System.out.println("new threads");
+
+		Thread clientInputThread = new Thread(clientInput);
+
+		clientInputThread.start();
+
+		counterOfClients++;
+		if (counterOfClients == 2) {
+			runTheGame();
+		}
+
+	}
+
+	/**
+	 * Gets tile map.
+	 * @return	tile map
+	 */
+	public Tile[][] getTileMap() {
 		return tileMap;
 	}
 
-	public void runTheGame() throws IOException {
+	/**
+	 * Runs the game.
+	 * @throws IOException
+	 */
+	public synchronized void runTheGame() throws IOException {
+		System.out.println("Running the game");
 
 		FXMLLoader loader = new FXMLLoader(getClass().getResource("level.fxml"));
-
-
-		LevelFileReader.loadSavedLevelFile("src/main/resources/levels/default_levels/" + LEVEL_NAME);
-		
-		width = LevelFileReader.getWidth();
-		height = LevelFileReader.getHeight();
-		MAX_RATS = LevelFileReader.getMaxRats();
-		PAR_TIME = LevelFileReader.getParTime();
-
-
-
-
 		loader.setController(this);
-		Pane root = loader.load();
+		loader.load();
+		if (isDefaultLevel) {
+			LevelFileReader.loadNormalLevelFile(this, "src/main/resources/server_levels/default_levels/" + LEVEL_NAME,
+					true);
+		} else {
+			LevelFileReader.loadNormalLevelFile(this, "src/main/resources/server_levels/created_levels/" + LEVEL_NAME,
+					true);
+		}
 
-		scene = new Scene(root, root.getPrefWidth(), root.getPrefHeight());
-		stage.setScene(scene);
+		WIDTH = LevelFileReader.getWidth();
+		HEIGHT = LevelFileReader.getHeight();
+
+		buildNewLevel();
+
+		MAX_RATS = LevelFileReader.getMaxRats();
+		if (LevelFileReader.getInProgTimer() != -1) {
+			PAR_TIME = LevelFileReader.getInProgTimer();
+		} else {
+			PAR_TIME = LevelFileReader.getParTime();
+		}
+		DROP_RATES = LevelFileReader.getDropRates();
+
+		System.out.println("finished runing the game server");
+
+		currentTimeLeft = PAR_TIME * 1000;
+		timerLabel.setText(millisToString(currentTimeLeft));
+
+		toolbars = Arrays.asList(bombToolbar, gasToolbar, sterilisationToolbar, poisonToolbar, maleSwapToolbar,
+				femaleSwapToolbar, stopSignToolbar, deathRatToolbar);
+		Arrays.fill(counters, 0);
+
+		System.out.println("Initialize test server0");
+		renderAllItems();
+		setupCanvasDragBehaviour();
+
+		System.out.println("Initialize test server1");
+		renderGame();
+		System.out.println("Initialize test server2");
+
+		tickTimeline = new Timeline(new KeyFrame(Duration.millis(250), event -> tick()));
+		tickTimeline.setCycleCount(Animation.INDEFINITE);
+		tickTimeline.play();
 
 	}
 
@@ -184,7 +260,7 @@ public class CooperationServer {
 	 *
 	 * @return number of each item.
 	 */
-	public static int[] getCounters() {
+	public int[] getCounters() {
 		return counters;
 	}
 
@@ -192,32 +268,7 @@ public class CooperationServer {
 	 * Initializes game.
 	 */
 	public void initialize() {
-		currentTimeLeft = PAR_TIME * 1000;
-		timerLabel.setText(millisToString(currentTimeLeft));
 
-		toolbars = Arrays.asList(bombToolbar, gasToolbar, sterilisationToolbar, poisonToolbar, maleSwapToolbar,
-				femaleSwapToolbar, stopSignToolbar, deathRatToolbar);
-		Arrays.fill(counters, 0);
-
-		renderAllItems();
-		setupCanvasDragBehaviour();
-
-		renderGame();
-
-		if (LevelFileReader.getHasLoadedSavedLevel()) {
-			System.arraycopy(LevelFileReader.getInProgInv(), 0, timeUntilDrop, 0, timeUntilDrop.length);
-		} else {
-			System.arraycopy(DROP_RATES, 0, timeUntilDrop, 0, timeUntilDrop.length);
-		}
-
-		tickTimeline = new Timeline(new KeyFrame(Duration.millis(FRAME_TIME), event -> tick()));
-		tickTimeline.setCycleCount(Animation.INDEFINITE);
-		tickTimeline.play();
-
-		// Start the SeaShantySimulator (music player)
-		SeaShantySimulator seaShantySimulator = new SeaShantySimulator();
-		seaShantySimulator.initialize();
-		seaShantySimulator.play();
 	}
 
 	/**
@@ -272,7 +323,7 @@ public class CooperationServer {
 	 * @return interactivity.
 	 */
 	private boolean tileInteractivityAt(double x, double y) {
-		if (x >= (width * TILE_SIZE) || y >= (height * TILE_SIZE)) {
+		if (x >= (WIDTH * TILE_SIZE) || y >= (HEIGHT * TILE_SIZE)) {
 			return false;
 		} else {
 			int xPos = (int) (Math.floor(x) / TILE_SIZE);
@@ -299,6 +350,7 @@ public class CooperationServer {
 	 * Periodically refreshes game.
 	 */
 	public void tick() {
+		System.out.println("tick ");
 		if ((femaleRatCounter + maleRatCounter + otherRatCounter) == 0) {
 			endGame(true);
 		} else if ((femaleRatCounter + maleRatCounter + otherRatCounter) >= MAX_RATS) {
@@ -318,6 +370,15 @@ public class CooperationServer {
 			if (currentTimeLeft > 0) {
 				currentTimeLeft = currentTimeLeft - FRAME_TIME;
 				timerLabel.setText(millisToString(currentTimeLeft));
+			}
+
+			TimeAndRatCounters temp = new TimeAndRatCounters(millisToString(currentTimeLeft),
+					String.valueOf(maleRatCounter), String.valueOf(femaleRatCounter),
+					(femaleRatCounter + maleRatCounter + otherRatCounter) + "/" + (MAX_RATS));
+
+			for (CooperationServerThreadObjectOutput est : clientsObjectsOutputs) {
+				System.out.print("counters  ");
+				est.sendTimeAndRatCounters(temp);
 			}
 		}
 	}
@@ -356,6 +417,12 @@ public class CooperationServer {
 				renderItem(i);
 			}
 		}
+
+		for (CooperationServerThreadObjectOutput est : clientsObjectsOutputs) {
+			System.out.print("items  ");
+			est.sendItems();
+			;
+		}
 	}
 
 	/**
@@ -364,35 +431,23 @@ public class CooperationServer {
 	 * @param wonGame whether level was won.
 	 */
 	private void endGame(boolean wonGame) {
+		System.out.println("end game " + wonGame);
 		tickTimeline.stop();
-		disableToolbars();
-		saveLevelStateButton.setDisable(true);
+		TimeAndRatCounters temp = new TimeAndRatCounters(millisToString(currentTimeLeft),
+				String.valueOf(maleRatCounter), String.valueOf(femaleRatCounter),
+				(femaleRatCounter + maleRatCounter + otherRatCounter) + "/" + (MAX_RATS), true, wonGame);
 
-		gameEndPane.setVisible(true);
-		saveAndExitButton.setVisible(false);
+		for (CooperationServerThreadObjectOutput est : clientsObjectsOutputs) {
+			System.out.print("counters  ");
+			est.sendTimeAndRatCounters(temp);
+		}
 
-		if (wonGame) {
-			score += currentTimeLeft / 1000;
-			gamePaneText.getChildren().add(new Text("You've won! :)"));
-			gamePaneScore.getChildren().add(new Text("Score: " + score));
-			ProfileFileReader.saveScore(ProfileFileReader.getLoggedProfile(), LEVEL_NAME, score);
-			HighScores.saveScore(ProfileFileReader.getLoggedProfile(), LEVEL_NAME, score);
+		boolean isDefault = LEVEL_NAME.matches(defaultLevelRegex);
+		if (isDefault) {
+			server.restartGameServer(LEVEL_NAME, "default", "cooperation");
 		} else {
-			gamePaneText.getChildren().add(new Text("You've lost! :("));
+			server.restartGameServer(LEVEL_NAME, "created", "cooperation");
 		}
-
-		String[] highScores = HighScores.getTopScores(LEVEL_NAME);
-		for (String text : highScores) {
-			gamePaneLeaderboard.getChildren().add(new Text(text + "\n"));
-		}
-	}
-
-	/**
-	 * Exits level and goes back to main menu.
-	 */
-	@FXML
-	private void exitGame() {
-		MAIN_MENU.finishLevel();
 	}
 
 	/**
@@ -435,6 +490,9 @@ public class CooperationServer {
 				}
 			}
 		}
+		for (CooperationServerThreadObjectOutput est : clientsObjectsOutputs) {
+			est.sendMap();
+		}
 	}
 
 	/**
@@ -444,6 +502,54 @@ public class CooperationServer {
 		for (int i = 0; i < counters.length; i++) {
 			renderItem(i);
 		}
+	}
+
+	/**
+	 * Places power on the map.
+	 * @param inputs	power info
+	 */
+	public void placePower(String[] inputs) {
+		int x = Integer.valueOf(inputs[2]);
+		int y = Integer.valueOf(inputs[3]);
+		int index = Integer.valueOf(inputs[1]);
+
+		Power power = null;
+		boolean addPower = true;
+		switch (index) {
+		case 0:
+			power = new Bomb(this, x, y);
+			break;
+		case 1:
+			power = new Gas(this, x, y, true);
+			break;
+		case 2:
+			power = new Sterilisation(this, x, y);
+			break;
+		case 3:
+			power = new Poison(this, x, y);
+			break;
+		case 4:
+			power = new MaleSwapper(this, x, y);
+			break;
+		case 5:
+			power = new FemaleSwapper(this, x, y);
+			break;
+		case 6:
+			power = new StopSign(this, x, y);
+			break;
+		case 7:
+			tileMap[x][y].addOccupantRat(new DeathRat(this, Rat.getDEFAULT_SPEED(), Rat.Direction.NORTH, 0, x, y, 0));
+			addPower = false;
+			break;
+		default:
+			addPower = false;
+		}
+		if (addPower) {
+			tileMap[x][y].addActivePower(power);
+		}
+
+		counters[index]--;
+		renderItem(index);
 	}
 
 	/**
@@ -460,38 +566,28 @@ public class CooperationServer {
 		boolean addPower = true;
 		switch (index) {
 		case 0:
-			power = new Bomb(x, y);
+			power = new Bomb(this, x, y);
 			break;
 		case 1:
-			power = new Gas(x, y, true);
+			power = new Gas(this, x, y, true);
 			break;
 		case 2:
-			power = new Sterilisation(x, y);
+			power = new Sterilisation(this, x, y);
 			break;
 		case 3:
-			power = new Poison(x, y);
+			power = new Poison(this, x, y);
 			break;
 		case 4:
-			power = new MaleSwapper(x, y);
+			power = new MaleSwapper(this, x, y);
 			break;
 		case 5:
-			power = new FemaleSwapper(x, y);
+			power = new FemaleSwapper(this, x, y);
 			break;
 		case 6:
-			power = new StopSign(x, y);
+			power = new StopSign(this, x, y);
 			break;
 		case 7:
-			SeaShantySimulator seaSim = new SeaShantySimulator();
-			int randomNum = ThreadLocalRandom.current().nextInt(1, 3);
-			if (randomNum == 1) {
-				seaSim.playAudioClip(DEATH_RAT_SOUND_1_PATH, SOUND_VOLUME_RAT);
-			} else if (randomNum == 2) {
-				seaSim.playAudioClip(DEATH_RAT_SOUND_2_PATH, SOUND_VOLUME_RAT);
-			} else {
-				seaSim.playAudioClip(DEATH_RAT_SOUND_3_PATH, SOUND_VOLUME_RAT);
-			}
-
-			tileMap[x][y].addOccupantRat(new DeathRat(Rat.getDEFAULT_SPEED(), Rat.Direction.NORTH, 0, x, y, 0));
+			tileMap[x][y].addOccupantRat(new DeathRat(this, Rat.getDEFAULT_SPEED(), Rat.Direction.NORTH, 0, x, y, 0));
 			addPower = false;
 			break;
 		default:
@@ -525,14 +621,13 @@ public class CooperationServer {
 
 		if (canBeSaved) {
 			try {
-				LevelFileReader.saveLevel(newLevelName);
+				LevelFileReader.saveLevel(this, newLevelName);
 				makeScreenShot(newLevelName);
 				System.out.println("Screenshot was saved");
 			} catch (IOException e) {
 				e.printStackTrace();
 				savingErrorText.setText("An error occurred saving game state.");
 			}
-			MAIN_MENU.finishLevel();
 		}
 	}
 
@@ -545,7 +640,7 @@ public class CooperationServer {
 		File file = new File("src\\main\\resources\\saved_games_images\\" + ProfileFileReader.getLoggedProfile() + "\\"
 				+ levelName + ".png");
 
-		WritableImage writableImage = new WritableImage(TILE_SIZE * width, TILE_SIZE * height);
+		WritableImage writableImage = new WritableImage(TILE_SIZE * WIDTH, TILE_SIZE * HEIGHT);
 		SnapshotParameters params = new SnapshotParameters();
 		levelCanvas.snapshot(params, writableImage);
 
@@ -624,7 +719,7 @@ public class CooperationServer {
 	 * @param item      item that is being made draggable.
 	 * @param dbContent String used in setupCanvasDragBehaviour.
 	 */
-	private static void makeDraggable(final ImageView item, int dbContent) {
+	private void makeDraggable(final ImageView item, int dbContent) {
 		item.setOnDragDetected(event -> {
 			Dragboard dragboard = item.startDragAndDrop(TransferMode.MOVE);
 			ClipboardContent clipboardContent = new ClipboardContent();
@@ -693,5 +788,26 @@ public class CooperationServer {
 			score += 10;
 			otherRatCounter--;
 		}
+	}
+
+	/**
+	 * Gets level name.
+	 * @return level name
+	 */
+	public String getLevelName() {
+		return LEVEL_NAME;
+	}
+
+	/**
+	 * Gets server port.
+	 * @return server port
+	 */
+	public int getPort() {
+		return cooperationServer.getLocalPort();
+	}
+
+	@FXML
+	void exitGame(ActionEvent event) {
+
 	}
 }
