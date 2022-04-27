@@ -1,47 +1,62 @@
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.io.PrintWriter;
 import java.net.Socket;
 
-public class CooperationServerThreadObjectOutput implements Runnable {
+/**
+ * Class that implements a cooperation server output.
+ *
+ * @author Tomasz Fijalkowski
+ * @version 1.0
+ */
+public class CooperationServerThreadObjectOutput {
 
 	private CooperationServer server;
 	private ObjectOutputStream outObject;
-	private Socket client;
 
+	/**
+	 * Constructor of cooperation server output.
+	 * @param cooperationServer	cooperation server
+	 * @param client			client
+	 * @throws IOException
+	 */
 	public CooperationServerThreadObjectOutput(CooperationServer cooperationServer, Socket client) throws IOException {
 		this.server = cooperationServer;
-		this.client = client;
 		this.outObject = new ObjectOutputStream(client.getOutputStream());
 	}
 
-	public void run() {
-	}
 
+	/**
+	 * Sends a map to client.
+	 */
 	public void sendMap() {
 		try {
 			Tile[][] temp = server.getTileMap();
 			outObject.writeObject(cloneTileMap(temp));
 			outObject.reset();
 			System.gc();
-//			System.out.println("Sending map finished");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 	
+	/**
+	 * Sends items to a client. 
+	 */
 	public void sendItems() {
 		try {
 			int[] temp = server.getCounters();
 			outObject.writeObject(temp);
 			outObject.reset();
 			System.gc();
-//			System.out.println("Sending items finished");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 	
+	/**
+	 * Sends time and rat counters to a client.
+	 * @param temp
+	 */
 	public void sendTimeAndRatCounters(TimeAndRatCounters temp) {
 		try {
 			outObject.writeObject(temp);
@@ -52,11 +67,15 @@ public class CooperationServerThreadObjectOutput implements Runnable {
 		}
 	}
 
+	/**
+	 * Clones tile map from a server.
+	 * @param tileMap	tile map
+	 * @return	cloned tile map
+	 */
 	private Tile[][] cloneTileMap(Tile[][] tileMap) {
 		Tile[][] temp = new Tile[tileMap.length][tileMap[0].length];
 		for (int i = 0; i < temp.length; i++) {
 			for (int j = 0; j < temp[i].length; j++) {
-				// tileMap[i][j].draw(i, j, gc);
 				if (tileMap[i][j] instanceof Grass) {
 					temp[i][j] = new Grass();
 				} else if (tileMap[i][j] instanceof GrassB) {

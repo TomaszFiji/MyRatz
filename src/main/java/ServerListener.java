@@ -15,21 +15,34 @@ import javax.imageio.ImageIO;
 
 import org.apache.commons.lang3.SerializationUtils;
 
+/**
+ * Class that implements a server listener.
+ *
+ * @author Tomasz Fijalkowski
+ * @version 1.0
+ */
 public class ServerListener implements Runnable {
 	private Server server;
-	private Socket client;
 	private BufferedReader in = null;
 	private ObjectOutputStream outObject;
 	private BufferedOutputStream out;
 
+	/**
+	 * Server listener constructor.
+	 * @param server	server
+	 * @param client	client
+	 * @throws IOException
+	 */
 	public ServerListener(Server server, Socket client) throws IOException {
 		this.server = server;
-		this.client = client;
 		this.in = new BufferedReader(new InputStreamReader(client.getInputStream()));
 		this.outObject = new ObjectOutputStream(client.getOutputStream());
 		this.out = new BufferedOutputStream(client.getOutputStream());
 	}
 
+	/**
+	 * Periodically listen to client requests.
+	 */
 	public void run() {
 		try {
 			while (true) {
@@ -39,7 +52,6 @@ public class ServerListener implements Runnable {
 				String[] inputs = input.split(" ");
 				System.out.println("recived: " + input);
 
-//				byte[] data = SerializationUtils.serialize(null);
 				switch (inputs[0]) {
 				case "createdLevels":
 					outObject.writeObject(new LevelNamesObject(server.getCreatedLevelsNames(), false));
@@ -59,13 +71,11 @@ public class ServerListener implements Runnable {
 					ImageIO.write(image, "png", out);
 					break;
 				case "deleteLevel":
-					// Syntax must follow: "portRequest <levelName> <levelType> <serverType>"
 					Boolean temp = server.deleteLevel(inputs[1]);
 					System.out.println(temp);
 					outObject.writeObject(temp);
 					break;
 				case "downloadLevel":
-					// Syntax must follow: "portRequest <levelName> <levelType> <serverType>"
 					String s = server.downloadMap(inputs[1], inputs[2]);
 					System.out.println(s);
 					outObject.writeObject(s);
@@ -76,7 +86,5 @@ public class ServerListener implements Runnable {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
 	}
-
 }

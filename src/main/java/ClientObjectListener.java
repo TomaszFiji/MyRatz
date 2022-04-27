@@ -1,28 +1,37 @@
-import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.Socket;
 
-import javax.imageio.ImageIO;
-
+/**
+ * Class that implements a client listener.
+ *
+ * @author Tomasz Fijalkowski
+ * @version 1.0
+ */
 public class ClientObjectListener implements Runnable {
 
 	private Socket server;
-	// private Tile[][] tileMap;
 	private ObjectInputStream inObject;
 	private Client client;
 
+	/**
+	 * Client listener constructor.
+	 * @param client	client
+	 * @param server	server
+	 * @throws IOException
+	 */
 	public ClientObjectListener(Client client, Socket server) throws IOException {
 		this.server = server;
 		inObject = new ObjectInputStream(this.server.getInputStream());
 		this.client = client;
 	}
 
-	@Override
+	/**
+	 * Periodically listen to server data.
+	 */
 	public void run() {
 		while (true) {
 			System.out.println("new client listener loop");
-//				Object img = ImageIO.read(ImageIO.createImageInputStream(server.getInputStream()));
 			Object temp;
 			try {
 				temp = inObject.readObject();
@@ -42,7 +51,6 @@ public class ClientObjectListener implements Runnable {
 					System.out.println("\n\nNot recognized object!!! \n\n" + temp.getClass());
 				}
 			} catch (ClassNotFoundException | IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}

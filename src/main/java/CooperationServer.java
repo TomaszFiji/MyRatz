@@ -1,14 +1,11 @@
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 import javax.imageio.ImageIO;
@@ -16,12 +13,10 @@ import javax.imageio.ImageIO;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
-import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -39,21 +34,21 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
-import javafx.stage.Stage;
 import javafx.util.Duration;
 
-public class CooperationServer implements Controller, ServerInterface, Serializable {
+/**
+ * Class that implements a cooperation server.
+ *
+ * @author Tomasz Fijalkowski
+ * @version 1.0
+ */
+public class CooperationServer implements Controller, ServerInterface {
 	private static final int ITEM_NUM = 8;
 	private static final int TILE_SIZE = 64;
 	private final int[] counters = new int[ITEM_NUM];
 
 	private static final String defaultLevelRegex = "level-[1-5]";
 
-	// For sounds
-	private static final String DEATH_RAT_SOUND_1_PATH = "deathRatSound1.mp3";
-	private static final String DEATH_RAT_SOUND_2_PATH = "deathRatSound2.mp3";
-	private static final String DEATH_RAT_SOUND_3_PATH = "deathRatSound3.mp3";
-	private static final double SOUND_VOLUME_RAT = 0.1f;
 
 	// Game map
 	private Tile[][] tileMap = new Tile[0][0];
@@ -145,17 +140,15 @@ public class CooperationServer implements Controller, ServerInterface, Serializa
 	 */
 	public CooperationServer(String selectedLevelName, Server server) {
 
-		/*
-		 * String levelName, MenuController mainMenuController, Scene scene, Stage
-		 * stage) { this.isMapLoaded = true; this.scene = scene; this.stage = stage;
-		 * this.selectedEditLevelName = levelName; this.levelName = levelName; MAIN_MENU
-		 * = mainMenuController;
-		 */
 		this.isDefaultLevel = selectedLevelName.matches(defaultLevelRegex);
 		LEVEL_NAME = selectedLevelName;
 		this.server = server;
 	}
 
+	/**
+	 * Runs a cooperation client.
+	 * @throws IOException
+	 */
 	public void runServer() throws IOException {
 		cooperationServer = new ServerSocket(0);
 		System.out.println(cooperationServer.getLocalSocketAddress() + " " + InetAddress.getLocalHost().getHostAddress()
@@ -166,24 +159,11 @@ public class CooperationServer implements Controller, ServerInterface, Serializa
 		ServerAcceptances esa = new ServerAcceptances(this, cooperationServer);
 		Thread esaThread = new Thread(esa);
 		esaThread.start();
-//		Platform.runLater(new Runnable() {
-//			public void run() {
-//				while (true) {
-//		try {
-//			Socket client = cooperationServer.accept();
-//			addClient(client);
-//			System.out.println("clientAdded");
-//			Socket client2 = cooperationServer.accept();
-//			addClient(client2);
-//			System.out.println("clientAdded");
-//		} catch (IOException e) {
-//
-//		}
-//				}
-//			}
-//		});
 	}
 
+	/**
+	 * Adds a client to a server.
+	 */
 	public void addClient(Socket client) throws IOException {
 		CooperationServerThreadObjectOutput clientOutput = new CooperationServerThreadObjectOutput(this, client);
 		CooperationServerThreadInput clientInput = new CooperationServerThreadInput(this, client);
@@ -193,10 +173,8 @@ public class CooperationServer implements Controller, ServerInterface, Serializa
 
 		System.out.println("new threads");
 
-		Thread clientOutputThread = new Thread(clientOutput);
 		Thread clientInputThread = new Thread(clientInput);
 
-		clientOutputThread.start();
 		clientInputThread.start();
 
 		counterOfClients++;
@@ -206,12 +184,18 @@ public class CooperationServer implements Controller, ServerInterface, Serializa
 
 	}
 
+	/**
+	 * Gets tile map.
+	 * @return	tile map
+	 */
 	public Tile[][] getTileMap() {
-
-		// return this.removeControllerFromMap(tileMap);
 		return tileMap;
 	}
 
+	/**
+	 * Runs the game.
+	 * @throws IOException
+	 */
 	public synchronized void runTheGame() throws IOException {
 		System.out.println("Running the game");
 
@@ -464,15 +448,6 @@ public class CooperationServer implements Controller, ServerInterface, Serializa
 		} else {
 			server.restartGameServer(LEVEL_NAME, "created", "cooperation");
 		}
-//
-//		if (wonGame) {
-//			score += currentTimeLeft / 1000;
-//			gamePaneText.getChildren().add(new Text("You've won! :)"));
-//			gamePaneScore.getChildren().add(new Text("Score: " + score));
-//		} else {
-//			gamePaneText.getChildren().add(new Text("You've lost! :("));
-//		}
-
 	}
 
 	/**
@@ -529,6 +504,10 @@ public class CooperationServer implements Controller, ServerInterface, Serializa
 		}
 	}
 
+	/**
+	 * Places power on the map.
+	 * @param inputs	power info
+	 */
 	public void placePower(String[] inputs) {
 		int x = Integer.valueOf(inputs[2]);
 		int y = Integer.valueOf(inputs[3]);
@@ -811,10 +790,18 @@ public class CooperationServer implements Controller, ServerInterface, Serializa
 		}
 	}
 
+	/**
+	 * Gets level name.
+	 * @return level name
+	 */
 	public String getLevelName() {
 		return LEVEL_NAME;
 	}
 
+	/**
+	 * Gets server port.
+	 * @return server port
+	 */
 	public int getPort() {
 		return cooperationServer.getLocalPort();
 	}

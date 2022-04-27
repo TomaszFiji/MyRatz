@@ -1,8 +1,8 @@
 import java.io.File;
+
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -12,11 +12,14 @@ import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
+/**
+ * Class that implements a server.
+ *
+ * @author Tomasz Fijalkowski
+ * @version 1.0
+ */
 public class Server implements ServerInterface {
 	private ServerSocket serverSocket;
-	private Scene scene;
-	private Stage stage;
-	private MenuController menu;
 	private ArrayList<Socket> clients = new ArrayList<>();
 	private ArrayList<EditorServer> defaultEditorServers = new ArrayList<>();
 	private ArrayList<EditorServer> createdEditorServers = new ArrayList<>();
@@ -25,6 +28,13 @@ public class Server implements ServerInterface {
 	private ArrayList<String> defaultLevelsNames = new ArrayList<>();
 	private ArrayList<String> createdLevelsNames = new ArrayList<>();
 
+	/**
+	 * Constructor for server class.
+	 * @param menu			main menu
+	 * @param scene			scene from main menu
+	 * @param stage			stage form main menu
+	 * @throws IOException	
+	 */
 	public Server(MenuController menu, Scene scene, Stage stage) throws IOException {
 		serverSocket = new ServerSocket(0);
 
@@ -47,6 +57,12 @@ public class Server implements ServerInterface {
 
 	}
 
+	/**
+	 * Restarts specified game server
+	 * @param levelName		name of the level
+	 * @param levelType		type of the level
+	 * @param serverType	type of the server
+	 */
 	public void restartGameServer(String levelName, String levelType, String serverType) {
 
 		if (levelType.equals("default")) {
@@ -122,6 +138,10 @@ public class Server implements ServerInterface {
 		}
 	}
 
+	/**
+	 * Adds new game servers to a server.
+	 * @param levelName	name of level
+	 */
 	public void addNewGameServer(String levelName) {
 
 		createdLevelsNames.add(levelName);
@@ -144,6 +164,9 @@ public class Server implements ServerInterface {
 		}
 	}
 
+	/**
+	 * Populate default name array list
+	 */
 	private void setDefaultLevelsNames() {
 		File directoryPath = new File("src/main/resources/server_levels/default_levels");
 		System.out.println(directoryPath.getAbsolutePath());
@@ -159,6 +182,9 @@ public class Server implements ServerInterface {
 		}
 	}
 
+	/**
+	 * Populate created name array list
+	 */
 	private void setCreatedLevelsNames() {
 		File directoryPath = new File("src/main/resources/server_levels/created_levels");
 		System.out.println(directoryPath.getAbsolutePath());
@@ -174,6 +200,9 @@ public class Server implements ServerInterface {
 		}
 	}
 
+	/**
+	 * Creates default editor game servers 
+	 */
 	private void createDefaultEditorServers() {
 		for (String s : defaultLevelsNames) {
 			EditorServer editorServer = new EditorServer(s, this);
@@ -186,6 +215,9 @@ public class Server implements ServerInterface {
 		}
 	}
 
+	/**
+	 * Creates created editor game servers 
+	 */
 	private void createCreatedEditorServers() {
 		for (String s : createdLevelsNames) {
 			EditorServer editorServer = new EditorServer(s, this);
@@ -198,6 +230,9 @@ public class Server implements ServerInterface {
 		}
 	}
 
+	/**
+	 * Creates default cooperation game servers 
+	 */
 	private void createDefaultCooperationServers() {
 		for (String s : defaultLevelsNames) {
 			CooperationServer cooperationServer = new CooperationServer(s, this);
@@ -210,6 +245,9 @@ public class Server implements ServerInterface {
 		}
 	}
 
+	/**
+	 * Creates created cooperation game servers 
+	 */
 	private void createCreatedCooperationServers() {
 		for (String s : createdLevelsNames) {
 			CooperationServer cooperationServer = new CooperationServer(s, this);
@@ -222,15 +260,30 @@ public class Server implements ServerInterface {
 		}
 	}
 
+	/**
+	 * Gets array list of created level names
+	 * @return	created level names
+	 */
 	public ArrayList<String> getCreatedLevelsNames() {
 		return createdLevelsNames;
 
 	}
 
+	/**
+	 * Gets array list of default level names
+	 * @return	default level names
+	 */
 	public ArrayList<String> getDefaultLevelsNames() {
 		return defaultLevelsNames;
 	}
 
+	/**
+	 * Gets port of specified game server.
+	 * @param levelName		name of the level
+	 * @param levelType		type of the level
+	 * @param serverType	type of the server
+	 * @return				port the game server is running on or 0 if server does not exist 
+	 */
 	public int getPortOfGameServer(String levelName, String levelType, String serverType) {
 		if (levelType.equals("default")) {
 			if (serverType.equals("editor")) {
@@ -278,14 +331,18 @@ public class Server implements ServerInterface {
 
 	}
 
+	/**
+	 * Gets server port.
+	 * @return	server port
+	 */
 	public int getPort() {
 		return serverSocket.getLocalPort();
 	}
 
-	public ArrayList<EditorServer> getEditorServers() {
-		return defaultEditorServers;
-	}
-
+	/**
+	 * Adds client to a server
+	 * @param client socket representing a client
+	 */
 	public synchronized void addClient(Socket client) throws IOException {
 		clients.add(client);
 		ServerListener sl = new ServerListener(this, client);
@@ -293,41 +350,19 @@ public class Server implements ServerInterface {
 		slThread.start();
 	}
 
+	/**
+	 * Closes a server
+	 * @throws IOException
+	 */
 	public void closeServer() throws IOException {
 		serverSocket.close();
 	}
 
-	public Image getLevelImg(String levelName) throws IOException {
-		File f = new File("src\\main\\resources\\server_levels\\images\\" + levelName + ".png");
-
-		if (f.exists()) {
-			FileInputStream tempStream = new FileInputStream(
-					"src\\main\\resources\\server_levels\\images\\" + levelName + ".png");
-			Image tempImg = new Image(tempStream);
-
-			int width = (int) tempImg.getWidth();
-			int height = (int) tempImg.getHeight();
-			float widthCompare = (float) 390 / (float) width;
-			float heightCompare = (float) 350 / (float) height;
-
-			if (widthCompare < heightCompare) {
-				width *= widthCompare;
-				height *= widthCompare;
-			} else {
-				width *= heightCompare;
-				height *= heightCompare;
-			}
-			FileInputStream tempStream2 = new FileInputStream(
-					"src\\main\\resources\\server_levels\\images\\" + levelName + ".png");
-//			SerializableImage img = new SerializableImage(tempStream2, width, height, false, false);
-
-			tempStream.close();
-			tempStream2.close();
-//			return img;
-		}
-		return null;
-	}
-
+	/**
+	 * Deletes specified level and every game server of this name.
+	 * @param levelName	name of the level
+	 * @return			true if success, false if fails
+	 */
 	public Boolean deleteLevel(String levelName) {
 		String temp = null;
 		for (String s : createdLevelsNames) {
@@ -338,7 +373,7 @@ public class Server implements ServerInterface {
 		if (temp != null) {
 			createdLevelsNames.remove(temp);
 		}
-		
+
 		CooperationServer tempC = null;
 		for (CooperationServer s : createdCooperationServers) {
 			if (s.getLevelName().equals(levelName)) {
@@ -348,7 +383,7 @@ public class Server implements ServerInterface {
 		if (tempC != null) {
 			createdCooperationServers.remove(tempC);
 		}
-		
+
 		EditorServer tempE = null;
 		for (EditorServer s : createdEditorServers) {
 			if (s.getLevelName().equals(levelName)) {
@@ -358,19 +393,27 @@ public class Server implements ServerInterface {
 		if (tempE != null) {
 			createdEditorServers.remove(tempE);
 		}
-		
+
 		File fileToDelete = new File("src\\main\\resources\\server_levels\\created_levels\\" + levelName + ".txt");
-		
+
 		return fileToDelete.delete();
 	}
 
-	public String downloadMap(String s, String levelType) throws FileNotFoundException {
-		File levelData = new File("src\\main\\resources\\server_levels\\" + levelType + "\\" + s + ".txt");
+	/**
+	 * Gets content of map file.
+	 * @param levelName	name of a level
+	 * @param levelType	type of a level
+	 * @return			content of map file
+	 * @throws FileNotFoundException
+	 */
+	public String downloadMap(String levelName, String levelType) throws FileNotFoundException {
+		File levelData = new File("src\\main\\resources\\server_levels\\" + levelType + "\\" + levelName + ".txt");
 		Scanner reader = new Scanner(levelData);
 		String out = "";
 		while (reader.hasNextLine()) {
 			out += reader.nextLine() + "\n";
 		}
+		reader.close();
 		return out;
 	}
 }

@@ -27,7 +27,6 @@
                      <ToggleGroup fx:id="clientGamemodeTypeGroup" />
                   </toggleGroup>
                </RadioButton>
-               <RadioButton id="radio-button" fx:id="sabotageClientRadioButton" layoutX="51.0" layoutY="39.0" mnemonicParsing="false" onAction="#clientGamemodeTypeChanged" prefHeight="24.0" prefWidth="125.0" text="     Sabotage" toggleGroup="$clientGamemodeTypeGroup" />
                <RadioButton id="radio-button" fx:id="mapCreationClientRadioButton" layoutX="51.0" layoutY="51.0" mnemonicParsing="false" onAction="#clientGamemodeTypeChanged" prefHeight="24.0" prefWidth="125.0" text="    Map Creation" toggleGroup="$clientGamemodeTypeGroup" />
             </children>
          </VBox>

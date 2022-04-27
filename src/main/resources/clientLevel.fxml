@@ -126,13 +126,6 @@
 					</BorderPane.margin>
 				</VBox>
 			</center>
-			<bottom>
-				<Button fx:id="saveLevelStateButton" mnemonicParsing="false" onAction="#openSaveDialogue" prefHeight="36.0" prefWidth="187.0" styleClass="sideBarButton" text="Save Level State" BorderPane.alignment="BOTTOM_CENTER">
-					<BorderPane.margin>
-						<Insets bottom="20.0" top="10.0" />
-					</BorderPane.margin>
-				</Button>
-			</bottom>
 			<top>
 				<HBox prefHeight="100.0" prefWidth="200.0" styleClass="ratCounters" BorderPane.alignment="CENTER">
                <Label fx:id="ratCounterLabel" prefHeight="45.0" prefWidth="77.0" text=" 0 / 0">

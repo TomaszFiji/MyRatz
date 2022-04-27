@@ -1,26 +1,15 @@
 import static java.lang.Integer.parseInt;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Arrays;
 
-import javax.imageio.ImageIO;
-
 import javafx.animation.FadeTransition;
-import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.SnapshotParameters;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
@@ -29,7 +18,6 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.image.WritableImage;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
@@ -69,87 +57,41 @@ public class EditorClient implements Controller {
 	private Tile selectedTile = new Grass();
 
     @FXML
-    private TextField bombTextField;
-    private TextField deathRatTextField;
-    private TextField femaleSwapTextField;
-    private TextField gameTimerTextField;
-    private TextField gasTextField;
-    private Text heightText;
-    private TextField heightTextField;
-    private Canvas levelCanvas;
-    private Text levelNameText;
-    private TextField levelNameTextField;
-    private Button levelSettingsButton;
-    private TextField maleSwapTextField;
-    private TextField maxRatTextField;
-    private TextField poisonTextField;
-    private HBox ratSpawnToolbar;
-    private RadioButton rbGrass;
-    private RadioButton rbGrassB;
-    private RadioButton rbPath;
-    private RadioButton rbPathB;
-    private RadioButton rbTunnel;
-    private RadioButton rbTunnelB;
-    private Button readyButton;
-    private Text readyPlayersText;
-    private Pane settingsDialoguePane;
-    private Text settingsErrorText;
-    private Button sizeChangeButton;
-    private Text sizeChangeErrorText;
-    private TextField sterilizationTextField;
-    private TextField stopSignTextField;
-    private Text widthText;
-    private TextField widthTextField;
-	public TextField[] powerTextFields;
+    public TextField bombTextField;
+    public TextField deathRatTextField;
+    public TextField femaleSwapTextField;
+    public TextField gameTimerTextField;
+    public TextField gasTextField;
+    public Text heightText;
+    public TextField heightTextField;
+    public Canvas levelCanvas;
+    public Text levelNameText;
+    public TextField levelNameTextField;
+    public Button levelSettingsButton;
+    public TextField maleSwapTextField;
+    public TextField maxRatTextField;
+    public TextField poisonTextField;
+    public HBox ratSpawnToolbar;
+    public RadioButton rbGrass;
+    public RadioButton rbGrassB;
+    public RadioButton rbPath;
+    public RadioButton rbPathB;
+    public RadioButton rbTunnel;
+    public RadioButton rbTunnelB;
+    public Button readyButton;
+    public Text readyPlayersText;
+    public Pane settingsDialoguePane;
+    public Text settingsErrorText;
+    public Button sizeChangeButton;
+    public Text sizeChangeErrorText;
+    public TextField sterilizationTextField;
+    public TextField stopSignTextField;
+    public Text widthText;
+    public TextField widthTextField;
+    public TextField[] powerTextFields;
 
 	// Level map
 	private Tile[][] tileMap = new Tile[0][0];
-
-	public void runTheGame(String selectedEditLevelName, boolean isDefaultLevel, Scene scene, Stage stage,
-			MenuController menu) throws IOException {
-
-		FXMLLoader loader = new FXMLLoader(getClass().getResource("editorClient.fxml"));
-
-		if (isDefaultLevel) {
-			LevelFileReader.loadNormalLevelFile(this,
-					"src/main/resources/levels/default_levels/" + selectedEditLevelName, true);
-		} else {
-			LevelFileReader.loadNormalLevelFile(this,
-					"src/main/resources/levels/created_levels/" + selectedEditLevelName, true);
-		}
-
-		loader.setController(this);
-		Pane root = loader.load();
-
-		scene = new Scene(root, root.getPrefWidth(), root.getPrefHeight());
-		stage.setScene(scene);
-		stage.show();
-	}
-
-	public void runClient(int port) throws IOException, ClassNotFoundException, InterruptedException {
-		Socket server = new Socket(SERVER_IP, port);
-		clientListener = new EditorClientListener(this, server);
-		clientOutput = new EditorClientOutput(this, server);
-		Thread clientListenerThread = new Thread(clientListener);
-		
-		clientListenerThread.start();
-
-		System.out.println("runned*******************************");
-	}
-
-	public void setTileMap(Tile[][] tileMap) {
-		this.tileMap = tileMap.clone();
-		this.width = tileMap.length;
-		this.height = tileMap[0].length;
-		widthText.setText(String.valueOf(width));
-		heightText.setText(String.valueOf(height));
-		System.out.println("Tile map changed");
-		renderBoard();
-	}
-
-	public Tile[][] getTileMap() {
-		return tileMap;
-	}
 
 	/**
 	 * Constructor for EditorController when a level is being made from scratch.
@@ -172,7 +114,7 @@ public class EditorClient implements Controller {
 		Arrays.fill(dropRates, 1);
 		levelName = "";
 	}
-
+	
 	/**
 	 * Constructor for EditorController when an existing level is being edited.
 	 * 
@@ -182,13 +124,12 @@ public class EditorClient implements Controller {
 	public EditorClient(String levelName, MenuController mainMenuController) {
 		this.levelName = levelName;
 		MAIN_MENU = mainMenuController;
-
+		
 		width = LevelFileReader.getWidth();
 		height = LevelFileReader.getHeight();
-
+		
 		tileMap = LevelFileReader.getTileMap();
-		//changeToAdultRats();
-
+		
 		maxRats = LevelFileReader.getMaxRats();
 		parTime = LevelFileReader.getParTime();
 		dropRates = LevelFileReader.getDropRates();
@@ -196,6 +137,75 @@ public class EditorClient implements Controller {
 			dropRates[i] = dropRates[i] / MILLIS_RATIO;
 		}
 	}
+	
+	/**
+	 * Runs the game.
+	 * @param selectedEditLevelName level name 
+	 * @param isDefaultLevel		true if level is default
+	 * @param scene					scene
+	 * @param stage					stage
+	 * @param menu					main menu
+	 * @throws IOException
+	 */
+	public void runTheGame(String selectedEditLevelName, boolean isDefaultLevel, Scene scene, Stage stage,
+			MenuController menu) throws IOException {
+
+		FXMLLoader loader = new FXMLLoader(getClass().getResource("editorClient.fxml"));
+
+		if (isDefaultLevel) {
+			LevelFileReader.loadNormalLevelFile(this,
+					"src/main/resources/levels/default_levels/" + selectedEditLevelName, true);
+		} else {
+			LevelFileReader.loadNormalLevelFile(this,
+					"src/main/resources/levels/created_levels/" + selectedEditLevelName, true);
+		}
+
+		loader.setController(this);
+		Pane root = loader.load();
+
+		scene = new Scene(root, root.getPrefWidth(), root.getPrefHeight());
+		stage.setScene(scene);
+		stage.show();
+	}
+
+	/**
+	 * connect client to a server.
+	 * @param port	server port
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 * @throws InterruptedException
+	 */
+	public void runClient(int port) throws IOException, ClassNotFoundException, InterruptedException {
+		Socket server = new Socket(SERVER_IP, port);
+		clientListener = new EditorClientListener(this, server);
+		clientOutput = new EditorClientOutput(this, server);
+		Thread clientListenerThread = new Thread(clientListener);
+		
+		clientListenerThread.start();
+	}
+
+	/**
+	 * Sets tile map
+	 * @param tileMap
+	 */
+	public void setTileMap(Tile[][] tileMap) {
+		this.tileMap = tileMap.clone();
+		this.width = tileMap.length;
+		this.height = tileMap[0].length;
+		widthText.setText(String.valueOf(width));
+		heightText.setText(String.valueOf(height));
+		System.out.println("Tile map changed");
+		renderBoard();
+	}
+
+	/**
+	 * Gets tile map.
+	 * @return
+	 */
+	public Tile[][] getTileMap() {
+		return tileMap;
+	}
+
 
 	/**
 	 * Initializes FXML elements and editor data.
@@ -476,7 +486,6 @@ public class EditorClient implements Controller {
 		gc.fillRect(0, height * TILE_SIZE, levelCanvas.getWidth(), levelCanvas.getHeight());
 
 		if (tileMap != null) {
-			// TODO fix magic nums
 			for (int i = 0; i < tileMap.length; i++) {
 				for (int j = 0; j < tileMap[i].length; j++) {
 					tileMap[i][j].draw(i, j, gc);
@@ -487,6 +496,9 @@ public class EditorClient implements Controller {
 		System.out.println("Finished rendering \n");
 	}
 
+	/**
+	 * Request change of map size on the server.
+	 */
 	public void requestChangeLevelSize() {
 		int newWidth = parseInt(widthTextField.getText());
 		int newHeight = parseInt(heightTextField.getText());
@@ -494,12 +506,19 @@ public class EditorClient implements Controller {
 		clientOutput.changeLevelSize(newWidth, newHeight);
 	}
 
+	/**
+	 * Request change of map name on the server.
+	 */
 	public void requestChangeLevelName() {
 		String newName = levelNameTextField.getText();
 
 		clientOutput.changeLevelName(newName);
 	}
 
+	/**
+	 * Changes level name.
+	 * @param levelNameMessage
+	 */
 	public void changeLevelName(String levelNameMessage) {
 		if (levelNameMessage.contains(" ")) {
 			sizeChangeErrorText.setText(levelNameMessage);
@@ -533,24 +552,6 @@ public class EditorClient implements Controller {
 	}
 
 	/**
-	 * Changes size of tile map. For levels that need to be made bigger, replaces
-	 * empty space with grass.
-	 * 
-	 * @param newWidth  width of new tile map.
-	 * @param newHeight height of new tile map.
-	 */
-	/*
-	 * private void changeTileMapSize(int newWidth, int newHeight) { Tile[][]
-	 * newTileMap = new Tile[newWidth][newHeight];
-	 * 
-	 * for (int i = 0; i < newWidth; i++) { for (int j = 0; j < newHeight; j++) { if
-	 * ((i >= tileMap.length) || (j >= tileMap[0].length) || (i == newWidth - 1) ||
-	 * (j == newHeight - 1)) { newTileMap[i][j] = new Grass(); } else {
-	 * newTileMap[i][j] = tileMap[i][j]; } } } tileMap = newTileMap; width =
-	 * newWidth; height = newHeight; renderBoard(); }
-	 */
-
-	/**
 	 * Displays level settings box when button is pressed.
 	 */
 	public void displayLevelSettings() {
@@ -559,6 +560,10 @@ public class EditorClient implements Controller {
 		settingsDialoguePane.setVisible(true);
 	}
 
+	/**
+	 * Saves settings of a map.
+	 * @param settings
+	 */
 	public void saveSettings(Settings settings) {
 		maxRatTextField.setText(String.valueOf(settings.getMaxRats()));
 		gameTimerTextField.setText(String.valueOf(settings.getParTime()));
@@ -704,11 +709,19 @@ public class EditorClient implements Controller {
 
 	}
 
+	/**
+	 * Request changee of client ready state.
+	 * @param event
+	 */
 	@FXML
 	void readyButtonAction(ActionEvent event) {
 		clientOutput.setReady(!isReady);
 	}
 
+	/**
+	 * Sets client ready state.
+	 * @param temp ready state
+	 */
 	public void setReady(Boolean temp) {
 		isReady = temp;
 		if (temp) {
@@ -720,6 +733,10 @@ public class EditorClient implements Controller {
 		}
 	}
 
+	/**
+	 * Sets ready status players counter.
+	 * @param temp
+	 */
 	public void setReadyStatus(ReadyStatus temp) {
 		readyPlayersText.setText(temp.getReadyPlayers() + "/" + temp.getAllPlayers());
 		levelNameText.setText(temp.getLevelName());
@@ -734,6 +751,10 @@ public class EditorClient implements Controller {
 		}
 	}
 	
+	/**
+	 * Applies fading effect to chosen node.
+	 * @param node
+	 */
 	private void applyFadingEffect(Node node) {
 		FadeTransition ft = new FadeTransition(Duration.millis(3000), node);
 		ft.setFromValue(1.0);
@@ -741,10 +762,16 @@ public class EditorClient implements Controller {
 		ft.play();
 	}
 
+	/**
+	 * Makes sure server know about client leaving.
+	 */
 	public void stageClosing() {
 		clientOutput.stageClosing();
 	}
 	
+	/**
+	 * Makes sure server know about client leaving.
+	 */
 	public void leave() {
 		clientOutput.stageClosing();
 		MAIN_MENU.finishLevel();

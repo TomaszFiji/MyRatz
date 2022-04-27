@@ -1,19 +1,11 @@
 import java.io.File;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
-
 import javax.imageio.ImageIO;
 
-import javafx.animation.Animation;
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -38,8 +30,13 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
-import javafx.util.Duration;
 
+/**
+ * Class that implements a cooperation client.
+ *
+ * @author Tomasz Fijalkowski
+ * @version 1.0
+ */
 public class CooperationClient implements Controller {
 
 	private static final int ITEM_NUM = 8;
@@ -87,14 +84,8 @@ public class CooperationClient implements Controller {
 	private int MAX_RATS;
 	private int PAR_TIME;
 
-	private int[] DROP_RATES;
-	private int[] timeUntilDrop = new int[ITEM_NUM];
-
 	private final MenuController MAIN_MENU;
 	private final String LEVEL_NAME;
-
-	// Milliseconds between frames
-	private final int FRAME_TIME = 250;
 
 	// Item toolbars
 	private List<HBox> toolbars;
@@ -135,9 +126,6 @@ public class CooperationClient implements Controller {
 	public Button saveAndExitButton;
 
 	private Socket server;
-	private int port;
-	private Stage stage;
-	private Scene scene;
 	private CooperationClientListener clientListener;
 	private CooperationClientOutput clientOutput;
 
@@ -155,24 +143,29 @@ public class CooperationClient implements Controller {
 		 * this.selectedEditLevelName = levelName; this.levelName = levelName; MAIN_MENU
 		 * = mainMenuController;
 		 */
-		this.scene = scene;
-		this.stage = stage;
 		LEVEL_NAME = selectedLevelName;
 		MAIN_MENU = mainMenuController;
 	}
 
+	/**
+	 * Runs a client
+	 * @param port	port of a server
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 * @throws InterruptedException
+	 */
 	public void runClient(int port) throws IOException, ClassNotFoundException, InterruptedException {
 		server = new Socket(SERVER_IP, port);
 		clientListener = new CooperationClientListener(this, server);
 		clientOutput = new CooperationClientOutput(this, server);
 		Thread clientListenerThread = new Thread(clientListener);
-		Thread clientOutputThread = new Thread(clientOutput);
 		clientListenerThread.start();
-		// clientListenerThread.start();
-
-		System.out.println("runned*******************************");
 	}
 
+	/**
+	 * Sets tile map.
+	 * @param tileMap	tile map
+	 */
 	public void setTileMap(Tile[][] tileMap) {
 		if(!gameStarted) {
 			waitingRoot.setDisable(true);
@@ -186,10 +179,23 @@ public class CooperationClient implements Controller {
 		this.renderGame();
 	}
 
+	/**
+	 * Gets tile map.
+	 * @return
+	 */
 	public Tile[][] getTileMap() {
 		return tileMap;
 	}
 
+	/**
+	 * Runs the game
+	 * @param selectedEditLevelName	level name
+	 * @param isDefaultLevel		if game is default true
+	 * @param scene					scene
+	 * @param stage					stage
+	 * @param menu					main menu
+	 * @throws IOException
+	 */
 	public void runTheGame(String selectedEditLevelName, boolean isDefaultLevel, Scene scene, Stage stage,
 			MenuController menu) throws IOException {
 
@@ -206,15 +212,12 @@ public class CooperationClient implements Controller {
 		WIDTH = LevelFileReader.getWidth();
 		HEIGHT = LevelFileReader.getHeight();
 
-//		buildNewLevel();
-
 		MAX_RATS = LevelFileReader.getMaxRats();
 		if (LevelFileReader.getInProgTimer() != -1) {
 			PAR_TIME = LevelFileReader.getInProgTimer();
 		} else {
 			PAR_TIME = LevelFileReader.getParTime();
 		}
-		DROP_RATES = LevelFileReader.getDropRates();
 
 		loader.setController(this);
 		Pane root = loader.load();
@@ -242,8 +245,11 @@ public class CooperationClient implements Controller {
 		return counters;
 	}
 
+	/**
+	 * Sets items counters.
+	 * @param counters counters
+	 */
 	public void setCounters(int[] counters) {
-		// this.counters = counters;
 		this.renderAllItemsSafely(counters);
 		setupCanvasDragBehaviour();
 	}
@@ -259,21 +265,9 @@ public class CooperationClient implements Controller {
 				femaleSwapToolbar, stopSignToolbar, deathRatToolbar);
 		Arrays.fill(counters, 2);
 
-//		renderAllItems();
 		setupCanvasDragBehaviour();
 
 		renderGame();
-
-//		if (LevelFileReader.getHasLoadedSavedLevel()) {
-//			System.arraycopy(LevelFileReader.getInProgInv(), 0, timeUntilDrop, 0, timeUntilDrop.length);
-//		} else {
-//			System.arraycopy(DROP_RATES, 0, timeUntilDrop, 0, timeUntilDrop.length);
-//		}
-
-		// Start the SeaShantySimulator (music player)
-//		SeaShantySimulator seaShantySimulator = new SeaShantySimulator();
-//		seaShantySimulator.initialize();
-//		seaShantySimulator.play();
 	}
 
 	/**
@@ -339,45 +333,9 @@ public class CooperationClient implements Controller {
 	}
 
 	/**
-	 * Converts milliseconds (as int) to a string of format mm:ss.
-	 *
-	 * @param millis milliseconds as int.
-	 * @return String mm:ss.
+	 * Sets time and counters
+	 * @param temp time and counters object
 	 */
-//	public String millisToString(int millis) {
-//		int seconds = millis / 1000;
-//		int minutes = (int) TimeUnit.SECONDS.toMinutes(seconds);
-//		int remainSeconds = seconds - (int) TimeUnit.MINUTES.toSeconds(minutes);
-//		return String.format("%02d:%02d", minutes, remainSeconds);
-//	}
-
-	/**
-	 * Periodically refreshes game.
-	 */
-//	public void tick() {
-//		if ((femaleRatCounter + maleRatCounter + otherRatCounter) == 0) {
-//			endGame(true);
-//		} else if ((femaleRatCounter + maleRatCounter + otherRatCounter) >= MAX_RATS) {
-//			endGame(false);
-//		} else {
-//			addPowers();
-//
-//			for (Tile[] tiles : tileMap) {
-//				for (Tile tile : tiles) {
-//					tile.update();
-//				}
-//			}
-//
-//			renderGame();
-//			renderCounters();
-//
-//			if (currentTimeLeft > 0) {
-//				currentTimeLeft = currentTimeLeft - FRAME_TIME;
-//				timerLabel.setText(millisToString(currentTimeLeft));
-//			}
-//		}
-//	}
-
 	public void setTimeAndCounters(TimeAndRatCounters temp) {
 		maleRatCounterLabel.setText(temp.getMaleRatCounter());
 		femaleRatCounterLabel.setText(temp.getFemaleRatCounter());
@@ -385,10 +343,8 @@ public class CooperationClient implements Controller {
 		timerLabel.setText(temp.getTimeLeft());
 		if (temp.isGameEnd()) {
 			disableToolbars();
-			saveLevelStateButton.setDisable(true);
 
 			gameEndPane.setVisible(true);
-			saveAndExitButton.setVisible(false);
 
 			if (temp.isGameWon()) {
 				score += currentTimeLeft / 1000;
@@ -438,34 +394,6 @@ public class CooperationClient implements Controller {
 
 	}
 
-	/**
-	 * Ends game in a win/lose scenario.
-	 *
-	 * @param wonGame whether level was won.
-	 */
-	private void endGame(boolean wonGame) {
-		// tickTimeline.stop();
-		disableToolbars();
-		saveLevelStateButton.setDisable(true);
-
-		gameEndPane.setVisible(true);
-		saveAndExitButton.setVisible(false);
-
-		if (wonGame) {
-			score += currentTimeLeft / 1000;
-			gamePaneText.getChildren().add(new Text("You've won! :)"));
-			gamePaneScore.getChildren().add(new Text("Score: " + score));
-			ProfileFileReader.saveScore(ProfileFileReader.getLoggedProfile(), LEVEL_NAME, score);
-			HighScores.saveScore(ProfileFileReader.getLoggedProfile(), LEVEL_NAME, score);
-		} else {
-			gamePaneText.getChildren().add(new Text("You've lost! :("));
-		}
-
-		String[] highScores = HighScores.getTopScores(LEVEL_NAME);
-		for (String text : highScores) {
-			gamePaneLeaderboard.getChildren().add(new Text(text + "\n"));
-		}
-	}
 
 	/**
 	 * Exits level and goes back to main menu.
@@ -526,6 +454,9 @@ public class CooperationClient implements Controller {
 		}
 	}
 
+	/**
+	 * Renders all item toolbars without glithes.
+	 */
 	private void renderAllItemsSafely(int[] newCounters) {
 
 		int[] previousCounters = counters.clone();
@@ -673,10 +604,6 @@ public class CooperationClient implements Controller {
 		saveLevelStateButton.setDisable(false);
 
 		renderAllItems();
-
-//		tickTimeline = new Timeline(new KeyFrame(Duration.millis(FRAME_TIME), event -> tick()));
-//		tickTimeline.setCycleCount(Animation.INDEFINITE);
-//		tickTimeline.play();
 	}
 
 	/**
@@ -695,9 +622,6 @@ public class CooperationClient implements Controller {
 			toolbars.get(index).getChildren().add(items[i]);
 			makeDraggable(item, index);
 		}
-//		} catch (Exception ignored) {
-//			System.out.println("Can not render items");
-//		}
 	}
 
 	/**

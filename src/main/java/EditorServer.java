@@ -1,7 +1,6 @@
 import static java.lang.Integer.parseInt;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -10,18 +9,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 import javax.imageio.ImageIO;
 
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.TextField;
@@ -35,9 +29,7 @@ import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
-import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
-import javafx.stage.Stage;
 
 public class EditorServer implements Controller, ServerInterface {
 	private ServerSocket editorServer;
@@ -60,7 +52,6 @@ public class EditorServer implements Controller, ServerInterface {
 	private int[] dropRates;
 
 	private String levelName;
-	private MenuController MAIN_MENU;
 
 	// Size of game map
 	private int width;
@@ -132,7 +123,6 @@ public class EditorServer implements Controller, ServerInterface {
 	public EditorServer(MenuController mainMenuController) {
 
 		this.selectedEditLevelName = "";
-		MAIN_MENU = mainMenuController;
 		width = 10;
 		height = 7;
 		tileMap = new Tile[width][height];
@@ -158,32 +148,23 @@ public class EditorServer implements Controller, ServerInterface {
 		this.server = server;
 		this.isMapLoaded = true;
 		this.isDefaultLevel = levelName.matches(defaultLevelRegex);
-//		this.scene = scene;
-//		this.stage = stage;
 		this.selectedEditLevelName = levelName;
 		this.levelName = levelName;
 		dropRates = new int[8];
 		Arrays.fill(dropRates, 1);
-//		MAIN_MENU = mainMenuController;
-
-//		width = LevelFileReader.getWidth();
-//		height = LevelFileReader.getHeight();
-//
-//		tileMap = LevelFileReader.getTileMap();
-//		changeToAdultRats();
-//
-//		maxRats = LevelFileReader.getMaxRats();
-//		parTime = LevelFileReader.getParTime();
-//		dropRates = LevelFileReader.getDropRates();
-//		for (int i = 0; i < dropRates.length; i++) {
-//			dropRates[i] = dropRates[i] / MILLIS_RATIO;
-//		}
 	}
 
+	/**
+	 * Gets level name.
+	 * @return level name
+	 */
 	public String getLevelName() {
 		return selectedEditLevelName;
 	}
 
+	/**
+	 * Removes controller from tile map.
+	 */
 	private void removeControllerFromMap() {
 		for (Tile[] tileList : tileMap) {
 			for (Tile t : tileList) {
@@ -200,6 +181,10 @@ public class EditorServer implements Controller, ServerInterface {
 		}
 	}
 
+	/**
+	 * Runs the game.
+	 * @throws IOException
+	 */
 	public void runTheGame() throws IOException {
 		FXMLLoader loader = new FXMLLoader(getClass().getResource("editor.fxml"));
 		loader.setController(this);
@@ -228,6 +213,10 @@ public class EditorServer implements Controller, ServerInterface {
 		this.removeControllerFromMap();
 	}
 
+	/**
+	 * Runs a server.
+	 * @throws IOException
+	 */
 	public void runServer() throws IOException {
 		editorServer = new ServerSocket(0);
 		System.out.println(editorServer.getLocalSocketAddress() + " " + InetAddress.getLocalHost().getHostAddress()
@@ -240,10 +229,17 @@ public class EditorServer implements Controller, ServerInterface {
 		saThread.start();
 	}
 
+	/**
+	 * Gets port of a server.
+	 * @return port
+	 */
 	public int getPort() {
 		return editorServer.getLocalPort();
 	}
 
+	/**
+	 * Sets all client on not ready state.
+	 */
 	private void setAllNotReady() {
 		Set<Socket> temp = clients.keySet();
 
@@ -258,6 +254,11 @@ public class EditorServer implements Controller, ServerInterface {
 		}
 	}
 
+	/**
+	 * Sets specified client on ready state.
+	 * @param client
+	 * @param isReady
+	 */
 	public synchronized void setReady(Socket client, String isReady) {
 
 		if (getNumOfRats() <= 1) {
@@ -314,6 +315,9 @@ public class EditorServer implements Controller, ServerInterface {
 		}
 	}
 
+	/**
+	 * Adds client to a server.
+	 */
 	public synchronized void addClient(Socket client) throws IOException {
 		clients.put(client, false);
 		EditorServerThreadObjectOutput clientOutput = new EditorServerThreadObjectOutput(this, client);
@@ -394,6 +398,10 @@ public class EditorServer implements Controller, ServerInterface {
 		});
 	}
 
+	/**
+	 * Adds rat to tile map.
+	 * @param inputs info about rat
+	 */
 	public synchronized void ratAdded(String[] inputs) {
 		int x = Integer.parseInt(inputs[2]);
 		int y = Integer.parseInt(inputs[3]);
@@ -490,6 +498,10 @@ public class EditorServer implements Controller, ServerInterface {
 		});
 	}
 
+	/**
+	 * Adds tile to map.
+	 * @param inputs info about tile.
+	 */
 	public synchronized void tileAdded(String[] inputs) {
 		char type = inputs[1].charAt(0);
 		int x = Integer.parseInt(inputs[2]);
@@ -674,19 +686,6 @@ public class EditorServer implements Controller, ServerInterface {
 	 * Renders tilemap onto window.
 	 */
 	private void renderBoard() {
-//		GraphicsContext gc = levelCanvas.getGraphicsContext2D();
-//
-//		gc.setFill(Color.web("#2d4945"));
-//		gc.fillRect(0, 0, levelCanvas.getWidth(), levelCanvas.getHeight());
-
-//		if (tileMap != null) {
-//			for (int i = 0; i < tileMap.length; i++) {
-//				for (int j = 0; j < tileMap[i].length; j++) {
-//					tileMap[i][j].draw(i, j, gc);
-//				}
-//			}
-//		}
-
 		this.setAllNotReady();
 		for (EditorServerThreadObjectOutput est : clientsObjectsOutputs) {
 			est.sendMap();
@@ -764,6 +763,10 @@ public class EditorServer implements Controller, ServerInterface {
 		settingsDialoguePane.setVisible(true);
 	}
 
+	/**
+	 * Saves map settings.
+	 * @param inputs	settings info
+	 */
 	public void saveSettings(String[] inputs) {
 		maxRatTextField.setText(inputs[1]);
 		gameTimerTextField.setText(inputs[2]);
@@ -782,11 +785,9 @@ public class EditorServer implements Controller, ServerInterface {
 		try {
 			maxRats = parseInt(maxRatTextField.getText());
 			parTime = parseInt(gameTimerTextField.getText());
-			boolean wrongDropRate = false;
 			for (int i = 0; i < dropRates.length; i++) {
 				dropRates[i] = parseInt(powerTextFields[i].getText());
 				if (dropRates[i] < 0) {
-					wrongDropRate = true;
 				}
 			}
 
@@ -931,18 +932,14 @@ public class EditorServer implements Controller, ServerInterface {
 	 */
 	@FXML
 	public void saveLevel() {
-//		String newLevelName = levelNameTextField.getText();
-//		savingErrorText.setText("");
-
 		changeToBabyRats();
 		for (int i = 0; i < dropRates.length; i++) {
 			dropRates[i] = dropRates[i] * MILLIS_RATIO;
 		}
 
-		SaveCustomLevel save = new SaveCustomLevel("src\\main\\resources\\server_levels\\created_levels\\" + levelName,
+		new SaveCustomLevel("src\\main\\resources\\server_levels\\created_levels\\" + levelName,
 				width, height, tileMap, maxRats, parTime, dropRates);
 
-//		makeScreenShot(levelName);
 		System.out.println("Screenshot was saved");
 
 		for (EditorServerThreadObjectOutput e : clientsObjectsOutputs) {
@@ -968,6 +965,11 @@ public class EditorServer implements Controller, ServerInterface {
 
 	}
 
+	/**
+	 * Changes name of a level.
+	 * @param client
+	 * @param inputs
+	 */
 	public void changeName(Socket client, String[] inputs) {
 		System.out.println("    change menu function is called. : " + inputs);
 		if (inputs.length > 2) {
@@ -987,9 +989,13 @@ public class EditorServer implements Controller, ServerInterface {
 		}
 	}
 
+	/**
+	 * Checks if level name already exist.
+	 * @param levelName level name
+	 * @return	true if level exist false otherwise
+	 */
 	private boolean doesLevelExist(String levelName) {
 		File directoryPath = new File("src/main/resources/server_levels/created_levels");
-		// System.out.println(directoryPath.getAbsolutePath());
 
 		// List of all files and directories
 		String[] contents = directoryPath.list();
@@ -1005,6 +1011,11 @@ public class EditorServer implements Controller, ServerInterface {
 		return false;
 	}
 
+	/**
+	 * Gets client output by client.
+	 * @param client
+	 * @return client output
+	 */
 	private EditorServerThreadObjectOutput getClientOutputByClient(Socket client) {
 		for (EditorServerThreadObjectOutput c : clientsObjectsOutputs) {
 			if (c.getClient().equals(client)) {
@@ -1014,6 +1025,11 @@ public class EditorServer implements Controller, ServerInterface {
 		return null;
 	}
 
+	/**
+	 * Gets client input by client.
+	 * @param client
+	 * @return client input
+	 */
 	private EditorServerThreadInput getClientInputByClient(Socket client) {
 		for (EditorServerThreadInput c : clientsInputs) {
 			if (c.getClient().equals(client)) {
@@ -1076,6 +1092,10 @@ public class EditorServer implements Controller, ServerInterface {
 
 	}
 
+	/**
+	 * Remove client form a list of clients.
+	 * @param client client
+	 */
 	public void clientLeaving(Socket client) {
 		System.out.println("Client leaving");
 		clients.remove(client);
